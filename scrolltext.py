@@ -13,7 +13,7 @@ PADDING = 53 # Display is 53 x 11 px
 MESSAGE_COLOUR = (255, 105, 0)
 OUTLINE_COLOUR = (0, 0, 0)
 BACKGROUND_COLOUR = (0, 0, 0)
-MESSAGE = "Next stop: Penmaenmawr"
+MESSAGE = "Next stop: Krists's SquirrelPad"
 HOLD_TIME = 1.5
 STEP_TIME = 0.055
 
