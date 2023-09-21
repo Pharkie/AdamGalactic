@@ -4,76 +4,151 @@ from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY
 
 # Create a GalacticUnicorn object and initialize graphics
 gu = GalacticUnicorn()
-graphics = PicoGraphics(DISPLAY)
+picoboard = PicoGraphics(DISPLAY)
 
 # Set font e.g., bitmap6, bitmap8, sans
-graphics.set_font("bitmap6")
+picoboard.set_font("bitmap6")
+
+# display.text(text, x, y, wordwrap, scale, angle, spacing)
+    # text - the text string to draw
+    # x - the destination X coordinate
+    # y - the destination Y coordinate
+    # wordwrap - number of pixels width before trying to break text into multiple lines
+    # scale - size
+    # angle - rotation angle (Vector only!)
+    # spacing - letter spacing
+    # fixed_width - space all characters equal distance apart (monospace)
 
 
-def display_number(number_for_display, x, y):
-    graphics.set_pen(graphics.create_pen(0,0,0))
-    graphics.clear()
-        
-    graphics.set_pen(graphics.create_pen(255, 105, 0))
-    graphics.text(str(number_for_display), x, y, -1, 0.5)
+def show_digit(display_number, x_pos, y_pos):
+    # Clear character space to black
+    picoboard.set_pen(picoboard.create_pen(0,0,0))
+    picoboard.rectangle(x_pos, y_pos, 6, 10)
     
-    gu.update(graphics)
+    picoboard.set_pen(picoboard.create_pen(255, 105, 0))
+    picoboard.text(str(display_number), x_pos, y_pos, -1, 0.5)
 
-def scroll_number(from_number, to_number, x, y):
-    num_loops = 7
+def scroll_digit_1row(reverse, top_number, bottom_number, x_pos, y_pos, loop_num):
+    # Clear character space to black
+    picoboard.set_pen(picoboard.create_pen(0,0,0))
+    picoboard.rectangle(x_pos, y_pos, 6, 10)
     
-    graphics.set_clip(x, y, 10, 6)
+    picoboard.set_clip(x_pos, y_pos, 6, 6)
+
+    picoboard.set_pen(picoboard.create_pen(255, 105, 0))
+    picoboard.text(str(top_number), x_pos, y_pos+1-loop_num, -1, 0.5)
+    picoboard.text(str(bottom_number), x_pos, y_pos+7-loop_num, -1, 0.5)
     
-    while num_loops > 0:
-        graphics.set_pen(graphics.create_pen(0,0,0))
-        graphics.clear()
-        
-        graphics.set_pen(graphics.create_pen(255, 105, 0))
-        graphics.text(str(from_number), x, y, -1, 0.5)
-        graphics.text(str(to_number), x, y+6, -1, 0.5)
-        
-        gu.update(graphics)
-        utime.sleep(0.05)
-        
-        y -= 1
-        num_loops -= 1
+    picoboard.remove_clip()
     
-# Define the vertical position to start
-y_position = -1
+old_h1 = old_h2 = old_m1 = old_m2 = old_s1 = old_s2 = 0;
+
+current_time = utime.localtime() # puts hours in current_time[3], minutes in current_time[4], seconds in current_time[5]
+# Set initial values for an initial display without any scrolling
+old_h1, old_h2 = divmod(current_time[3], 10)
+old_m1, old_m2 = divmod(current_time[4], 10)
+old_s1, old_s2 = divmod(current_time[5], 10)
 
 while True:
-    x_position = 20
-    y_position = 3
+    # Set X across the display for time components
+    h1_x = 7
+    h2_x = 7+(1*6)
+    m1_x = 7+(2*6)
+    m2_x = 7+(3*6)
+    s1_x = 7+(4*6)
+    s2_x = 7+(5*6)
+    all_y = 3
     
-    graphics.set_pen(graphics.create_pen(0,0,0))
-    graphics.clear()
+    picoboard.set_pen(picoboard.create_pen(0,0,0))
+    picoboard.clear()
     
-    for current_num in range(10):
-        display_number(current_num, x_position, y_position)
-        utime.sleep(1 - (7*0.05))
-        if current_num == 9:
-            target_num = 0
+    current_time = utime.localtime() # puts hours in current_time[3], minutes in current_time[4], seconds in current_time[5]
+    # Split time components HH:MM:SS into two digits
+    h1, h2 = divmod(current_time[3], 10)
+    m1, m2 = divmod(current_time[4], 10)
+    s1, s2 = divmod(current_time[5], 10)
+    
+    if h1 != old_h1:
+        tick_h1 = True
+    else:
+        tick_h1 = False
+        
+    if h2 != old_h2:
+        tick_h2 = True
+    else:
+        tick_h2 = False
+        
+    if m1 != old_m1:
+        tick_m1 = True
+    else:
+        tick_m1 = False
+        
+    if m2 != old_m2:
+        tick_m2 = True
+    else:
+        tick_m2 = False
+        
+    if s1 != old_s1:
+        tick_s1 = True
+    else:
+        tick_s1 = False
+        
+    if s2 != old_s2:
+        tick_s2 = True
+    else:
+        tick_s2 = False
+         
+    picoboard.set_pen(picoboard.create_pen(0,0,0))
+    picoboard.clear()
+    picoboard.set_pen(picoboard.create_pen(255, 105, 0))
+    
+    loop_num = 1
+    
+    while loop_num <= 5: # Digits are 5 px high
+        #print(h1, old_h1, h1 != old_h1, tick_h1)
+        if tick_h1:
+            scroll_digit_1row(0, old_h1, h1, h1_x, all_y, loop_num)
         else:
-            target_num = current_num + 1
-        scroll_number(current_num, target_num, x_position, y_position)
+            show_digit(old_h1, h1_x, all_y)
+        
+        if tick_h2:
+            scroll_digit_1row(0, old_h2, h2, h2_x, all_y, loop_num)
+        else:
+            show_digit(old_h2, h2_x, all_y)
+            
+        if tick_m1:
+            scroll_digit_1row(0, old_m1, m1, m1_x, all_y, loop_num)
+        else:
+            show_digit(old_m1, m1_x, all_y)
+            
+        if tick_m2:
+            scroll_digit_1row(0, old_m2, m2, m2_x, all_y, loop_num)
+        else:
+            show_digit(old_m2, m2_x, all_y)
 
-   
-#     graphics.set_pen(graphics.create_pen(255, 105, 0))
-#     # Display numbers 0 to 9 in a vertical strip
-#     for num in range(12):
-#         number_text = str(num % 10)
-#         graphics.text(number_text, 20, y_position + num * 6, -1, 0.5)
-#     
-#     # Update the display
-#     gu.update(graphics)
-#     
-#     # Pause briefly before scrolling
-#     utime.sleep(0.05)
-#     
-#     # Scroll the numbers upwards
-#     y_position -= 1
-#     
-#     # Reset the vertical position when it reaches the top
-#     if y_position < -((10*6)): # 10 digits x 6 pixels high
-#         y_position = -1
+        if tick_s1:
+            scroll_digit_1row(0, old_s1, s1, s1_x, all_y, loop_num)
 
+        else:
+            show_digit(old_s1, s1_x, all_y)
+            
+        if tick_s2:
+            scroll_digit_1row(0, old_s2, s2, s2_x, all_y, loop_num)
+
+        else:
+            show_digit(old_s2, s2_x, all_y)
+
+        gu.update(picoboard)
+        
+        utime.sleep(0.05)
+
+        loop_num += 1
+     
+    old_h1 = h1
+    old_h2 = h2
+    old_m1 = m1
+    old_m2 = m2
+    old_s1 = s1
+    old_s2 = s2
+
+    utime.sleep(1 - (5*0.05))
