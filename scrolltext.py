@@ -72,7 +72,6 @@ while True:
 
     graphics.set_pen(graphics.create_pen(int(MESSAGE_COLOUR[0]), int(MESSAGE_COLOUR[1]), int(MESSAGE_COLOUR[2])))
     graphics.text(MESSAGE, PADDING - shift, 2, -1, 0.5)
-    #outline_text(MESSAGE, x=PADDING - shift, y=2)
 
     # update the display
     gu.update(graphics)
