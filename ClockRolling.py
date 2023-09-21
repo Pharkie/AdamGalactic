@@ -18,12 +18,12 @@ picoboard.set_font("bitmap6")
     # angle - rotation angle (Vector only!)
     # spacing - letter spacing
     # fixed_width - space all characters equal distance apart (monospace)
-
+    # digit chars are 5w, 6h
 
 def show_digit(display_number, x_pos, y_pos):
     # Clear character space to black
     picoboard.set_pen(picoboard.create_pen(0,0,0))
-    picoboard.rectangle(x_pos, y_pos, 6, 10)
+    picoboard.rectangle(x_pos, y_pos, 5, 6)
     
     picoboard.set_pen(picoboard.create_pen(255, 105, 0))
     picoboard.text(str(display_number), x_pos, y_pos, -1, 0.5)
@@ -31,13 +31,13 @@ def show_digit(display_number, x_pos, y_pos):
 def scroll_digit_1row(reverse, top_number, bottom_number, x_pos, y_pos, loop_num):
     # Clear character space to black
     picoboard.set_pen(picoboard.create_pen(0,0,0))
-    picoboard.rectangle(x_pos, y_pos, 6, 10)
+    picoboard.rectangle(x_pos, y_pos, 5, 6)
     
-    picoboard.set_clip(x_pos, y_pos, 6, 6)
+    picoboard.set_clip(x_pos, y_pos, 5, 6)
 
     picoboard.set_pen(picoboard.create_pen(255, 105, 0))
-    picoboard.text(str(top_number), x_pos, y_pos+1-loop_num, -1, 0.5)
-    picoboard.text(str(bottom_number), x_pos, y_pos+7-loop_num, -1, 0.5)
+    picoboard.text(str(top_number), x_pos, y_pos-loop_num, -1, 0.5)
+    picoboard.text(str(bottom_number), x_pos, y_pos+6-loop_num, -1, 0.5)
     
     picoboard.remove_clip()
     
@@ -52,11 +52,11 @@ old_s1, old_s2 = divmod(current_time[5], 10)
 while True:
     # Set X across the display for time components
     h1_x = 7
-    h2_x = 7+(1*6)
-    m1_x = 7+(2*6)
-    m2_x = 7+(3*6)
-    s1_x = 7+(4*6)
-    s2_x = 7+(5*6)
+    h2_x = 7+(1*5)
+    m1_x = 7+(2*5)+2
+    m2_x = 7+(3*5)+2
+    s1_x = 7+(4*5)+5
+    s2_x = 7+(5*5)+5
     all_y = 3
     
     picoboard.set_pen(picoboard.create_pen(0,0,0))
@@ -104,7 +104,7 @@ while True:
     
     loop_num = 1
     
-    while loop_num <= 5: # Digits are 5 px high
+    while loop_num <= 6: # Digits are 5 px high
         #print(h1, old_h1, h1 != old_h1, tick_h1)
         if tick_h1:
             scroll_digit_1row(0, old_h1, h1, h1_x, all_y, loop_num)
@@ -138,6 +138,12 @@ while True:
         else:
             show_digit(old_s2, s2_x, all_y)
 
+        # Add in colons
+        picoboard.set_pen(picoboard.create_pen(255, 105, 0))
+        picoboard.text(":", 7+(2*5), all_y, -1, 0.5) # HH:MM
+        picoboard.text(":", 7+(4*5)+3, all_y, -1, 0.5) # MM:SS
+        
+        # Update display
         gu.update(picoboard)
         
         utime.sleep(0.05)
@@ -151,4 +157,4 @@ while True:
     old_s1 = s1
     old_s2 = s2
 
-    utime.sleep(1 - (5*0.05))
+    utime.sleep(1-(6*0.05))
