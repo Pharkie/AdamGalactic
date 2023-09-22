@@ -1,4 +1,6 @@
 import utime
+import network
+import ntptime
 from galactic import GalacticUnicorn
 from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY
 
@@ -18,7 +20,7 @@ def show_digit(display_number, x_pos, y_pos):
     picoboard.text(str(display_number), x_pos, y_pos, -1, 0.5)
 
 def scroll_digit(reverse, top_number, bottom_number, x_pos, y_pos, loop_num):
-    """Scroll a single digit from top to bottom at the specified position."""
+    """Scroll a single digit at the specified position."""
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
     picoboard.rectangle(x_pos, y_pos, 5, 6)
     
@@ -32,18 +34,66 @@ def scroll_digit(reverse, top_number, bottom_number, x_pos, y_pos, loop_num):
 
 def get_time_values():
     """Get the current time and split it into individual digits."""
-    current_time = utime.localtime()
+    current_time = utime.localtime() # Uses microcontroller's internal clock, which may be unreliable
     hours_tens, hours_ones = divmod(current_time[3], 10)
     minutes_tens, minutes_ones = divmod(current_time[4], 10)
     seconds_tens, seconds_ones = divmod(current_time[5], 10)
     return hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones
 
+def show_init_msg():
+    """Display a simple message while we sync the clock on init."""
+    picoboard.set_pen(picoboard.create_pen(0, 0, 0))
+    picoboard.clear()
+    
+    picoboard.set_pen(picoboard.create_pen(153, 255, 255))
+    picoboard.text("PenClock", 5, 2, -1, 0.7)
+    gu.update(picoboard)
+
+def sync_ntp():
+    try:
+        from secrets import WIFI_SSID, WIFI_PASSWORD
+    except ImportError:
+        print("Create secrets.py with your WiFi credentials to get time from NTP")
+        return
+
+    # Start connection
+    wlan = network.WLAN(network.STA_IF)
+    wlan.active(True)
+    wlan.config(pm=0xa11140)  # Turn WiFi power saving off for some slow APs
+    wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+
+    # Wait for connect success or failure
+    max_wait = 100
+    while max_wait > 0:
+        if wlan.status() < 0 or wlan.status() >= 3:
+            break
+        max_wait -= 1
+        print('waiting for connection...')
+        utime.sleep(0.2)
+
+    if max_wait > 0:
+        print("Connected")
+
+        try:
+            ntptime.settime()
+            print("Time set")
+        except OSError:
+            pass
+
+    wlan.disconnect()
+    wlan.active(False)
+
 def main():
+    show_init_msg()
+    sync_ntp()
+        
     old_values = get_time_values() # Record the start time of each cycle for timing
     
     # Set X across the display for time components
-    x_positions = [7, 7 + 1 * 5, 7 + (2 * 5) + 2, 7 + (3 * 5) + 2, 7 + (4 * 5) + 5, 7 + (5 * 5) + 5]
-    all_y = 3
+    base_x = 10
+    char_width = 5
+    x_positions = [base_x, base_x + 1 * char_width, base_x + (2 * char_width) + 2, base_x + (3 * char_width) + 2, base_x + (4 * char_width) + 5, base_x + (5 * char_width) + char_width]
+    all_y = -1
 
     while True:
         start_time = utime.ticks_ms()
@@ -53,6 +103,9 @@ def main():
 
         # Initialize a list to track which digits need scrolling
         tick_flags = [values[i] != old_values[i] for i in range(6)]
+        
+        picoboard.set_pen(picoboard.create_pen(0, 0, 0))
+        picoboard.clear()
 
         for i in range(6): # Loop for vertical lines of a digit (6) 
             for j in range(6): # Loop for each of the time variables in HH:MM:SS
@@ -64,8 +117,8 @@ def main():
             # Add colons
             if seconds_ones % 2 == 0:
                 picoboard.set_pen(picoboard.create_pen(255, 105, 0))
-                picoboard.text(":", 7 + (2 * 5), all_y, -1, 0.5)
-                picoboard.text(":", 7 + (4 * 5) + 3, all_y, -1, 0.5)
+                picoboard.text(":", base_x + (2 * char_width), all_y, -1, 0.5)
+                picoboard.text(":", base_x + (4 * char_width) + 3, all_y, -1, 0.5)
 
             gu.update(picoboard)
             utime.sleep(0.05)
@@ -82,4 +135,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
