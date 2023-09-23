@@ -18,6 +18,14 @@ import sys
 from galactic import GalacticUnicorn
 from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY
 
+def format_date(dt):
+    """Format the date as 'DD MMM YYYY'."""
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    day = "{:02d}".format(dt[2])
+    month = months[dt[1] - 1]
+    year = "{:04d}".format(dt[0])
+    return f"{day} {month} {year}"
+
 def last_sunday(year, month):
     """Calculate the date of the last Sunday of the specified month and year."""
     # Find the date of the last Sunday in a given month
@@ -193,9 +201,17 @@ async def sync_ntp_periodically():
 
 async def main():
     old_values = get_time_values()
-       
+        
     while True:
         start_time = utime.ticks_ms()
+
+        # Get today's date and display it underneath the time
+        current_date = utime.localtime()
+        date_str = format_date(current_date)
+        # Set the date text color once
+        pen_colour_date = colour_grey
+        picoboard.set_pen(picoboard.create_pen(pen_colour_date[0], pen_colour_date[1], pen_colour_date[2]))
+        picoboard.text(text=date_str, x1=1, y1=all_y + char_height + 1, wordwrap=-1, scale=1)
 
         hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones = get_time_values()
         values = [hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones]
@@ -215,7 +231,7 @@ async def main():
             picoboard.text(text = ":", x1 = base_x + (4 * char_width) + 3, y1 = all_y, wordwrap = -1, scale = 1)
 
             gu.update(picoboard)
-            await uasyncio.sleep(0.05)
+            utime.sleep(0.05)
 
         end_time = utime.ticks_ms()
         cycle_duration = utime.ticks_diff(end_time, start_time)
@@ -235,9 +251,10 @@ if __name__ == "__main__":
     
     colour_black = (0, 0, 0)
     colour_yellow = (255, 105, 0)
+    colour_grey = (96, 96, 96)
     colour_blue = (153, 255, 255)
 
-    base_x = 10
+    base_x = 9
     char_width = 5
     char_height = 5
     
