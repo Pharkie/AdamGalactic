@@ -1,4 +1,5 @@
 import utime
+import urandom
 import network
 import ntptime
 from galactic import GalacticUnicorn
@@ -17,7 +18,7 @@ def show_digit(display_number, x_pos, y_pos):
     picoboard.rectangle(x_pos, y_pos, 5, 6)
     
     picoboard.set_pen(picoboard.create_pen(255, 105, 0))
-    picoboard.text(str(display_number), x_pos, y_pos, -1, 0.5)
+    picoboard.text(str(display_number), x_pos, y_pos, -1, scale=1)
 
 def scroll_digit(reverse, top_number, bottom_number, x_pos, y_pos, loop_num):
     """Scroll a single digit at the specified position."""
@@ -27,8 +28,8 @@ def scroll_digit(reverse, top_number, bottom_number, x_pos, y_pos, loop_num):
     picoboard.set_clip(x_pos, y_pos, 5, 6)
 
     picoboard.set_pen(picoboard.create_pen(255, 105, 0))
-    picoboard.text(str(top_number), x_pos, y_pos - 1 - loop_num, -1, 0.5)
-    picoboard.text(str(bottom_number), x_pos, y_pos + 5 - loop_num, -1, 0.5)
+    picoboard.text(str(top_number), x_pos, y_pos - 1 - loop_num, -1, scale=1)
+    picoboard.text(str(bottom_number), x_pos, y_pos + 5 - loop_num, -1, scale=1)
     
     picoboard.remove_clip()
 
@@ -42,14 +43,25 @@ def get_time_values():
 
 def show_init_msg():
     """Display a simple message while we sync the clock on init."""
+    gu.set_brightness(0.2)
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
     picoboard.clear()
     
     picoboard.set_pen(picoboard.create_pen(153, 255, 255))
-    picoboard.text("PenClock", 5, 2, -1, 0.7)
+    picoboard.text("PenClock", 5, 2, -1, scale=1)
     gu.update(picoboard)
-
+    gu.set_brightness(1.0)
+    
 def sync_ntp():
+    gu.set_brightness(0.2)
+    picoboard.set_pen(picoboard.create_pen(0, 0, 0))
+    picoboard.clear()
+    
+    picoboard.set_pen(picoboard.create_pen(0, 204, 0))
+    picoboard.text("Syncing..", 5, 2, -1, scale=1)
+    gu.update(picoboard)
+    gu.set_brightness(1.0)
+    
     try:
         from secrets import WIFI_SSID, WIFI_PASSWORD
     except ImportError:
@@ -85,6 +97,7 @@ def sync_ntp():
 
 def main():
     show_init_msg()
+    utime.sleep(0.5)
     sync_ntp()
         
     old_values = get_time_values() # Record the start time of each cycle for timing
