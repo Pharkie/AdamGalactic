@@ -148,11 +148,10 @@ async def main():
                 else:
                     show_digit(old_values[j], x_positions[j], all_y)
 
-            if seconds_ones % 2 == 0:
-                pen_colour = colour_yellow
-                picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
-                picoboard.text(text = ":", x1 = base_x + (2 * char_width), y1 = all_y, wordwrap = -1, scale = 1)
-                picoboard.text(text = ":", x1 = base_x + (4 * char_width) + 3, y1 = all_y, wordwrap = -1, scale = 1)
+            pen_colour = colour_yellow if seconds_ones % 2 == 0 else colour_black
+            picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
+            picoboard.text(text = ":", x1 = base_x + (2 * char_width), y1 = all_y, wordwrap = -1, scale = 1)
+            picoboard.text(text = ":", x1 = base_x + (4 * char_width) + 3, y1 = all_y, wordwrap = -1, scale = 1)
 
             gu.update(picoboard)
             await uasyncio.sleep(0.05)
@@ -172,6 +171,7 @@ if __name__ == "__main__":
     picoboard = PicoGraphics(DISPLAY)
     picoboard.set_font("bitmap6")
     
+    colour_black = (0, 0, 0)
     colour_yellow = (255, 105, 0)
     colour_blue = (153, 255, 255)
 
@@ -199,4 +199,5 @@ if __name__ == "__main__":
     finally:
         # Close the event loop
         loop.close()
+
 
