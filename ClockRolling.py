@@ -47,12 +47,18 @@ def show_init_msg():
     picoboard.text("PenClock", 5, 2, -1, scale=1)
     gu.update(picoboard)
     gu.set_brightness(1.0)
+    utime.sleep(0.5) # Brief name display before we get into the clock
+
+    picoboard.set_pen(picoboard.create_pen(0, 0, 0))
+    picoboard.clear()
+    gu.update(picoboard)
     
 def sync_ntp():
     print('sync_ntp() called')
     gu.set_brightness(0.2)
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
     picoboard.clear()
+    gu.update(picoboard)
     
     pen_colour = colour_blue
     picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
@@ -105,47 +111,44 @@ async def sync_ntp_periodically():
         print("sync_ntp_periodically() called")
         sync_ntp()
 #        next_sync_in = 60 * 60 + urandom.randint(0, 59) # Live mode
-        next_sync_in = urandom.randint(6, 12) # Dev mode
+        next_sync_in = urandom.randint(10, 15) # Dev mode
         print("Next sync in (secs): ", next_sync_in)
         await uasyncio.sleep(next_sync_in)  # Sleep for a random duration between 60 and 61 minutes
 
 async def main():
     old_values = get_time_values()
-      
+       
     while True:
         start_time = utime.ticks_ms()
-    
+
         hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones = get_time_values()
         values = [hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones]
-    
+
         tick_flags = [values[i] != old_values[i] for i in range(6)]
-        
-        picoboard.set_pen(picoboard.create_pen(0, 0, 0))
-        picoboard.clear()
-    
+
         for i in range(6):
             for j in range(6):
                 if tick_flags[j]:
                     scroll_digit(0, old_values[j], values[j], x_positions[j], all_y, i)
                 else:
                     show_digit(old_values[j], x_positions[j], all_y)
-    
+
             if seconds_ones % 2 == 0:
                 pen_colour = colour_yellow
                 picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
                 picoboard.text(":", base_x + (2 * char_width), all_y, -1, 0.5)
                 picoboard.text(":", base_x + (4 * char_width) + 3, all_y, -1, 0.5)
-    
+
             gu.update(picoboard)
             await uasyncio.sleep(0.05)
-    
+
         end_time = utime.ticks_ms()
         cycle_duration = utime.ticks_diff(end_time, start_time)
         sleep_duration = 1000 - cycle_duration
-    
+
         if sleep_duration > 0:
             await uasyncio.sleep_ms(sleep_duration)
-    
+
         old_values = values.copy()
 
 if __name__ == "__main__":
@@ -165,20 +168,15 @@ if __name__ == "__main__":
     all_y = -1
 
     show_init_msg()
-    utime.sleep(0.5) # Brief name display before we get into the clock
 
-    # Create an event loop
+    # Add tasks for the coroutines to the event loop
     loop = uasyncio.get_event_loop()
-
-    # Create tasks for the coroutines
     main_task = loop.create_task(main())
     sync_ntp_task = loop.create_task(sync_ntp_periodically())
 
     try:
-        # Run the main coroutine
-        loop.run_until_complete(main_task)
-        # Start the periodic NTP synchronization
-        loop.run_until_complete(sync_ntp_task)
+        # Run all tasks forever
+        loop.run_forever()
     except KeyboardInterrupt:
         pass
     finally:
