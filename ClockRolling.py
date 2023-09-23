@@ -2,15 +2,9 @@ import utime
 import urandom
 import network
 import ntptime
+from machine import Timer
 from galactic import GalacticUnicorn
 from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY
-
-# Create a GalacticUnicorn object and initialize graphics
-gu = GalacticUnicorn()
-picoboard = PicoGraphics(DISPLAY)
-
-# Set font e.g., bitmap6, bitmap8, sans
-picoboard.set_font("bitmap6")
 
 def show_digit(display_number, x_pos, y_pos):
     """Display a single digit at the specified position."""
@@ -53,6 +47,7 @@ def show_init_msg():
     gu.set_brightness(1.0)
     
 def sync_ntp():
+    print('sync_ntp()')
     gu.set_brightness(0.2)
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
     picoboard.clear()
@@ -75,12 +70,12 @@ def sync_ntp():
     wlan.connect(WIFI_SSID, WIFI_PASSWORD)
 
     # Wait for connect success or failure
-    max_wait = 100
+    max_wait = 20
     while max_wait > 0:
         if wlan.status() < 0 or wlan.status() >= 3:
             break
         max_wait -= 1
-        print('waiting for connection...')
+        print('Waiting for Wifi to connect')
         utime.sleep(0.2)
 
     if max_wait > 0:
@@ -90,17 +85,36 @@ def sync_ntp():
             ntptime.settime()
             print("Time set")
         except OSError:
+            print("Failed to set time")
             pass
+    else:
+        print("Timed out waiting for Wifi")
 
     wlan.disconnect()
     wlan.active(False)
+    
+def sync_ntp_callback(timer):
+        print("sync_ntp_callback()")
+        sync_ntp()
+
+# Create a GalacticUnicorn object and initialize graphics
+gu = GalacticUnicorn()
+picoboard = PicoGraphics(DISPLAY)
 
 def main():
+    # Set font e.g., bitmap6, bitmap8, sans
+    picoboard.set_font("bitmap6")
+
     show_init_msg()
     utime.sleep(0.5)
     sync_ntp()
+    
+    # Create a non-blocking timer for NTP synchronization
+    ntp_timer = Timer(-1)
+    sync_interval = urandom.randint(10, 15)  # Random interval between 60 to 61 minutes
+    ntp_timer.init(period=sync_interval * 1000, mode=Timer.PERIODIC, callback=sync_ntp_callback)
         
-    old_values = get_time_values() # Record the start time of each cycle for timing
+    old_values = get_time_values() # Initialise as current time
     
     # Set X across the display for time components
     base_x = 10
@@ -109,7 +123,7 @@ def main():
     all_y = -1
 
     while True:
-        start_time = utime.ticks_ms()
+        start_time = utime.ticks_ms() # Record the start time of each cycle for timing
 
         hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones = get_time_values()
         values = [hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones]
@@ -148,3 +162,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
