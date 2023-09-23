@@ -1,30 +1,45 @@
+"""
+Author: Adam Knowles
+Version: 0.1
+Description: A digital clock with animated rolling digits (as if on a mechanical reel) that periodically syncs time via NTP if Wifi is available
+
+GitHub Repository: https://github.com/Pharkie/AdamGalactic/ClockRolling.py
+License: GNU General Public License (GPL)
+"""
+
 import utime
 import urandom
 import uasyncio
 import network
 import ntptime
 from machine import Timer
+import sys
 from galactic import GalacticUnicorn
 from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY
 
-def show_digit(display_number, x_pos, y_pos):
+def show_digit(number_to_show, x_pos, y_pos):
     """Display a single digit at the specified position."""
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
-    picoboard.rectangle(x_pos, y_pos, 5, 6)
+    picoboard.rectangle(x_pos, y_pos, char_width, char_height)
     
-    picoboard.set_pen(picoboard.create_pen(255, 105, 0))
-    picoboard.text(str(display_number), x_pos, y_pos, -1, scale=1)
+    pen_colour = colour_yellow
+    picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
+    picoboard.text(text = str(number_to_show), x1 = x_pos, y1 = y_pos, wordwrap = -1, scale = 1)
 
 def scroll_digit(reverse, top_number, bottom_number, x_pos, y_pos, loop_num):
     """Scroll a single digit at the specified position."""
-    picoboard.set_pen(picoboard.create_pen(0, 0, 0))
-    picoboard.rectangle(x_pos, y_pos, 5, 6)
-    
-    picoboard.set_clip(x_pos, y_pos, 5, 6)
+    # Don't know why but this is needed
+    y_pos = y_pos + 1
 
-    picoboard.set_pen(picoboard.create_pen(255, 105, 0))
-    picoboard.text(str(top_number), x_pos, y_pos - 1 - loop_num, -1, scale=1)
-    picoboard.text(str(bottom_number), x_pos, y_pos + 5 - loop_num, -1, scale=1)
+    picoboard.set_pen(picoboard.create_pen(0, 0, 0))
+    picoboard.rectangle(x_pos, y_pos, char_width, char_height)
+
+    picoboard.set_clip(x_pos, y_pos, char_width, char_height)
+
+    pen_colour = colour_yellow
+    picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
+    picoboard.text(text = str(top_number), x1 = x_pos, y1 = y_pos - (loop_num + 1), wordwrap = -1, scale = 1)
+    picoboard.text(text = str(bottom_number), x1 = x_pos, y1 = y_pos + char_height - (loop_num + 1), wordwrap = -1, scale = 1)
     
     picoboard.remove_clip()
 
@@ -44,7 +59,7 @@ def show_init_msg():
     
     pen_colour = colour_blue
     picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
-    picoboard.text("PenClock", 5, 2, -1, scale=1)
+    picoboard.text(text = "PenClock", x1 = 5, y1 = 2, wordwrap = -1, scale = 1)
     gu.update(picoboard)
     gu.set_brightness(1.0)
     utime.sleep(0.5) # Brief name display before we get into the clock
@@ -62,7 +77,7 @@ def sync_ntp():
     
     pen_colour = colour_blue
     picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
-    picoboard.text("Syncing..", 5, all_y, -1, scale=1)
+    picoboard.text(text = "Syncing..", x1 = 5, y1 = 2, wordwrap = -1, scale = 1)
     gu.update(picoboard)
     gu.set_brightness(1.0)
     
@@ -110,8 +125,8 @@ async def sync_ntp_periodically():
     while True:
         print("sync_ntp_periodically() called")
         sync_ntp()
-#        next_sync_in = 60 * 60 + urandom.randint(0, 59) # Live mode
-        next_sync_in = urandom.randint(10, 15) # Dev mode
+        next_sync_in = 60 * 60 + urandom.randint(0, 59) # Live mode
+#        next_sync_in = urandom.randint(10, 15) # Dev mode
         print("Next sync in (secs): ", next_sync_in)
         await uasyncio.sleep(next_sync_in)  # Sleep for a random duration between 60 and 61 minutes
 
@@ -136,8 +151,8 @@ async def main():
             if seconds_ones % 2 == 0:
                 pen_colour = colour_yellow
                 picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
-                picoboard.text(":", base_x + (2 * char_width), all_y, -1, 0.5)
-                picoboard.text(":", base_x + (4 * char_width) + 3, all_y, -1, 0.5)
+                picoboard.text(text = ":", x1 = base_x + (2 * char_width), y1 = all_y, wordwrap = -1, scale = 1)
+                picoboard.text(text = ":", x1 = base_x + (4 * char_width) + 3, y1 = all_y, wordwrap = -1, scale = 1)
 
             gu.update(picoboard)
             await uasyncio.sleep(0.05)
@@ -162,6 +177,8 @@ if __name__ == "__main__":
 
     base_x = 10
     char_width = 5
+    char_height = 5
+    
     x_positions = [base_x, base_x + 1 * char_width, base_x + (2 * char_width) + 2,
                    base_x + (3 * char_width) + 2, base_x + (4 * char_width) + 5,
                    base_x + (5 * char_width) + char_width]
