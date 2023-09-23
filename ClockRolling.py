@@ -1,7 +1,8 @@
 """
 Author: Adam Knowles
 Version: 0.1
-Description: A digital clock with animated rolling digits (as if on a mechanical reel) that periodically syncs time via NTP if Wifi is available
+Description: A digital clock with animated rolling digits (as if on a mechanical reel) that periodically syncs time
+via NTP if Wifi is available, taking account of British SUmmer Time (BST)
 
 GitHub Repository: https://github.com/Pharkie/AdamGalactic/ClockRolling.py
 License: GNU General Public License (GPL)
@@ -16,6 +17,33 @@ from machine import Timer
 import sys
 from galactic import GalacticUnicorn
 from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY
+
+def last_sunday(year, month):
+    """Calculate the date of the last Sunday of the specified month and year."""
+    # Find the date of the last Sunday in a given month
+    last_day = utime.mktime((year, month + 1, 1, 0, 0, 0, 0, 0)) - 86400  # Set to the last day of the previous month
+    weekday = utime.localtime(last_day)[6]  # Get the weekday for the last day
+
+    while weekday != 6:  # Sunday has index 6
+        last_day -= 86400  # Subtract a day in seconds
+        weekday = (weekday - 1) % 7
+    return int(last_day)
+
+def is_bst(dt):
+    """Check if the current time is within BST (British Summer Time)."""
+    # Check if the given datetime is in DST (BST) considering the 1 am transition
+    dst_start = last_sunday(dt[0], 3)  # Last Sunday of March
+    dst_end = last_sunday(dt[0], 10)   # Last Sunday of October
+
+    # Check if the current time is within DST dates
+    if dst_start <= utime.mktime(dt) < dst_end:
+        # Check if it's after 1 am on the last Sunday of March and before 2 am on the last Sunday of October
+        if (dt[1] == 3 and dt[2] == (dst_start // 86400) + 1 and dt[3] < 1) or (dt[1] == 10 and dt[2] == (dst_end // 86400) and dt[3] < 2):
+            return False  # Not in DST during the 1 am transition
+        else:
+            return True   # In DST during other times
+    else:
+        return False
 
 def show_digit(number_to_show, x_pos, y_pos):
     """Display a single digit at the specified position."""
@@ -45,11 +73,28 @@ def scroll_digit(reverse, top_number, bottom_number, x_pos, y_pos, loop_num):
 
 def get_time_values():
     """Get the current time and split it into individual digits."""
-    current_time = utime.localtime() # Uses microcontroller's internal clock, which may be unreliable
-    hours_tens, hours_ones = divmod(current_time[3], 10)
-    minutes_tens, minutes_ones = divmod(current_time[4], 10)
-    seconds_tens, seconds_ones = divmod(current_time[5], 10)
-    return hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones
+    global is_BST  # Access the global BST status
+    
+    current_time_tuple = utime.localtime()  # As set by NTP call, if Wifi is available
+
+    # If it's BST, add an hour to the current time
+    if is_BST:
+        current_time_seconds = utime.mktime(current_time_tuple)
+        new_time_seconds = current_time_seconds + 3600
+        current_time_tuple = utime.localtime(new_time_seconds)
+
+    # Extract digits
+    hours_tens, hours_ones = divmod(current_time_tuple[3], 10)
+    minutes_tens, minutes_ones = divmod(current_time_tuple[4], 10)
+    seconds_tens, seconds_ones = divmod(current_time_tuple[5], 10)
+
+    # Return the extracted digits
+    return (
+        hours_tens, hours_ones,
+        minutes_tens, minutes_ones,
+        seconds_tens, seconds_ones
+    )
+
 
 def show_init_msg():
     """Display a simple message while we sync the clock on init."""
@@ -69,18 +114,19 @@ def show_init_msg():
     gu.update(picoboard)
     
 def sync_ntp():
+    global is_BST
     print('sync_ntp() called')
     gu.set_brightness(0.2)
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
     picoboard.clear()
     gu.update(picoboard)
-    
+
     pen_colour = colour_blue
     picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
     picoboard.text(text = "Syncing..", x1 = 5, y1 = 2, wordwrap = -1, scale = 1)
     gu.update(picoboard)
     gu.set_brightness(1.0)
-    
+
     try:
         from secrets import WIFI_SSID, WIFI_PASSWORD
     except ImportError:
@@ -106,8 +152,16 @@ def sync_ntp():
         print("Connected")
 
         try:
-            ntptime.settime()
+            ntptime.settime() # No parameters available for DST offset
             print("Time set")
+
+            # Update the global BST status
+            current_time_tuple = utime.localtime()
+            is_BST = is_bst(current_time_tuple)
+            if is_BST:
+                print("Time is BST (UTC+1), so adding an hour.")
+            else:
+                print("Time is not BST, so using unmodified UTC.")
         except OSError:
             print("Failed to set time")
             pass
@@ -120,15 +174,22 @@ def sync_ntp():
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
     picoboard.clear()
     gu.update(picoboard)
-    
+
 async def sync_ntp_periodically():
+    """Sync the clock at the top of the hour + 0-59 random seconds."""
     while True:
         print("sync_ntp_periodically() called")
         sync_ntp()
-        next_sync_in = 60 * 60 + urandom.randint(0, 59) # Live mode
-#        next_sync_in = urandom.randint(10, 15) # Dev mode
+        current_time = utime.localtime()
+        
+        # Calculate the number of seconds until the next hour
+        seconds_until_next_hour = 3600 - current_time[5] - (60 * current_time[4])
+        
+        # Add a random number of seconds between 0 and 59 (1 minute)
+        next_sync_in = seconds_until_next_hour + urandom.randint(0, 59)
+        
         print("Next sync in (secs): ", next_sync_in)
-        await uasyncio.sleep(next_sync_in)  # Sleep for a random duration between 60 and 61 minutes
+        await uasyncio.sleep(next_sync_in)  # Sleep for the calculated duration
 
 async def main():
     old_values = get_time_values()
@@ -170,6 +231,7 @@ if __name__ == "__main__":
     gu = GalacticUnicorn()
     picoboard = PicoGraphics(DISPLAY)
     picoboard.set_font("bitmap6")
+    is_BST = False
     
     colour_black = (0, 0, 0)
     colour_yellow = (255, 105, 0)
@@ -185,6 +247,7 @@ if __name__ == "__main__":
     all_y = -1
 
     show_init_msg()
+
 
     # Add tasks for the coroutines to the event loop
     loop = uasyncio.get_event_loop()
