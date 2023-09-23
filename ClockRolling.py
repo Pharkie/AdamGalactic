@@ -42,7 +42,8 @@ def show_init_msg():
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
     picoboard.clear()
     
-    picoboard.set_pen(picoboard.create_pen(153, 255, 255))
+    pen_colour = colour_blue
+    picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
     picoboard.text("PenClock", 5, 2, -1, scale=1)
     gu.update(picoboard)
     gu.set_brightness(1.0)
@@ -53,8 +54,9 @@ def sync_ntp():
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
     picoboard.clear()
     
-    picoboard.set_pen(picoboard.create_pen(0, 204, 0))
-    picoboard.text("Syncing..", 5, 2, -1, scale=1)
+    pen_colour = colour_blue
+    picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
+    picoboard.text("Syncing..", 5, all_y, -1, scale=1)
     gu.update(picoboard)
     gu.set_brightness(1.0)
     
@@ -94,6 +96,10 @@ def sync_ntp():
     wlan.disconnect()
     wlan.active(False)
     
+    picoboard.set_pen(picoboard.create_pen(0, 0, 0))
+    picoboard.clear()
+    gu.update(picoboard)
+    
 async def sync_ntp_periodically():
     while True:
         print("sync_ntp_periodically() called")
@@ -104,18 +110,8 @@ async def sync_ntp_periodically():
         await uasyncio.sleep(next_sync_in)  # Sleep for a random duration between 60 and 61 minutes
 
 async def main():
-    # Create a GalacticUnicorn object and initialize graphics
-    picoboard.set_font("bitmap6")
-    
     old_values = get_time_values()
-    
-    base_x = 10
-    char_width = 5
-    x_positions = [base_x, base_x + 1 * char_width, base_x + (2 * char_width) + 2,
-                   base_x + (3 * char_width) + 2, base_x + (4 * char_width) + 5,
-                   base_x + (5 * char_width) + char_width]
-    all_y = -1
-    
+      
     while True:
         start_time = utime.ticks_ms()
     
@@ -135,7 +131,8 @@ async def main():
                     show_digit(old_values[j], x_positions[j], all_y)
     
             if seconds_ones % 2 == 0:
-                picoboard.set_pen(picoboard.create_pen(255, 105, 0))
+                pen_colour = colour_yellow
+                picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
                 picoboard.text(":", base_x + (2 * char_width), all_y, -1, 0.5)
                 picoboard.text(":", base_x + (4 * char_width) + 3, all_y, -1, 0.5)
     
@@ -152,8 +149,20 @@ async def main():
         old_values = values.copy()
 
 if __name__ == "__main__":
+    # Set global variables
     gu = GalacticUnicorn()
     picoboard = PicoGraphics(DISPLAY)
+    picoboard.set_font("bitmap6")
+    
+    colour_yellow = (255, 105, 0)
+    colour_blue = (153, 255, 255)
+
+    base_x = 10
+    char_width = 5
+    x_positions = [base_x, base_x + 1 * char_width, base_x + (2 * char_width) + 2,
+                   base_x + (3 * char_width) + 2, base_x + (4 * char_width) + 5,
+                   base_x + (5 * char_width) + char_width]
+    all_y = -1
 
     show_init_msg()
     utime.sleep(0.5) # Brief name display before we get into the clock
@@ -162,8 +171,8 @@ if __name__ == "__main__":
     loop = uasyncio.get_event_loop()
 
     # Create tasks for the coroutines
-    sync_ntp_task = loop.create_task(sync_ntp_periodically())
     main_task = loop.create_task(main())
+    sync_ntp_task = loop.create_task(sync_ntp_periodically())
 
     try:
         # Run the main coroutine
