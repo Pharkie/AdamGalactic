@@ -1,5 +1,6 @@
 import utime
 import urandom
+import uasyncio
 import network
 import ntptime
 from machine import Timer
@@ -47,7 +48,7 @@ def show_init_msg():
     gu.set_brightness(1.0)
     
 def sync_ntp():
-    print('sync_ntp()')
+    print('sync_ntp() called')
     gu.set_brightness(0.2)
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
     picoboard.clear()
@@ -76,7 +77,7 @@ def sync_ntp():
             break
         max_wait -= 1
         print('Waiting for Wifi to connect')
-        utime.sleep(0.2)
+        utime.sleep(0.3) # This is not using async because we need to block the clock from display updates until the sync is complete
 
     if max_wait > 0:
         print("Connected")
@@ -93,73 +94,85 @@ def sync_ntp():
     wlan.disconnect()
     wlan.active(False)
     
-def sync_ntp_callback(timer):
-        print("sync_ntp_callback()")
+async def sync_ntp_periodically():
+    while True:
+        print("sync_ntp_periodically() called")
         sync_ntp()
+#        next_sync_in = 60 * 60 + urandom.randint(0, 59) # Live mode
+        next_sync_in = urandom.randint(6, 12) # Dev mode
+        print("Next sync in (secs): ", next_sync_in)
+        await uasyncio.sleep(next_sync_in)  # Sleep for a random duration between 60 and 61 minutes
 
-# Create a GalacticUnicorn object and initialize graphics
-gu = GalacticUnicorn()
-picoboard = PicoGraphics(DISPLAY)
-
-def main():
-    # Set font e.g., bitmap6, bitmap8, sans
+async def main():
+    # Create a GalacticUnicorn object and initialize graphics
     picoboard.set_font("bitmap6")
-
-    show_init_msg()
-    utime.sleep(0.5)
-    sync_ntp()
     
-    # Create a non-blocking timer for NTP synchronization
-    ntp_timer = Timer(-1)
-    sync_interval = urandom.randint(10, 15)  # Random interval between 60 to 61 minutes
-    ntp_timer.init(period=sync_interval * 1000, mode=Timer.PERIODIC, callback=sync_ntp_callback)
-        
-    old_values = get_time_values() # Initialise as current time
+    old_values = get_time_values()
     
-    # Set X across the display for time components
     base_x = 10
     char_width = 5
-    x_positions = [base_x, base_x + 1 * char_width, base_x + (2 * char_width) + 2, base_x + (3 * char_width) + 2, base_x + (4 * char_width) + 5, base_x + (5 * char_width) + char_width]
+    x_positions = [base_x, base_x + 1 * char_width, base_x + (2 * char_width) + 2,
+                   base_x + (3 * char_width) + 2, base_x + (4 * char_width) + 5,
+                   base_x + (5 * char_width) + char_width]
     all_y = -1
-
+    
     while True:
-        start_time = utime.ticks_ms() # Record the start time of each cycle for timing
-
+        start_time = utime.ticks_ms()
+    
         hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones = get_time_values()
         values = [hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones]
-
-        # Initialize a list to track which digits need scrolling
+    
         tick_flags = [values[i] != old_values[i] for i in range(6)]
         
         picoboard.set_pen(picoboard.create_pen(0, 0, 0))
         picoboard.clear()
-
-        for i in range(6): # Loop for vertical lines of a digit (6) 
-            for j in range(6): # Loop for each of the time variables in HH:MM:SS
+    
+        for i in range(6):
+            for j in range(6):
                 if tick_flags[j]:
                     scroll_digit(0, old_values[j], values[j], x_positions[j], all_y, i)
                 else:
                     show_digit(old_values[j], x_positions[j], all_y)
-
-            # Add colons
+    
             if seconds_ones % 2 == 0:
                 picoboard.set_pen(picoboard.create_pen(255, 105, 0))
                 picoboard.text(":", base_x + (2 * char_width), all_y, -1, 0.5)
                 picoboard.text(":", base_x + (4 * char_width) + 3, all_y, -1, 0.5)
-
+    
             gu.update(picoboard)
-            utime.sleep(0.05)
-
-        end_time = utime.ticks_ms()  # Record the end time of each cycle
-        cycle_duration = utime.ticks_diff(end_time, start_time) # Calculate the duration of each cycle
+            await uasyncio.sleep(0.05)
+    
+        end_time = utime.ticks_ms()
+        cycle_duration = utime.ticks_diff(end_time, start_time)
         sleep_duration = 1000 - cycle_duration
-
-        # Calculate the time to sleep to achieve a 1-second interval
+    
         if sleep_duration > 0:
-            utime.sleep_ms(sleep_duration)
-
+            await uasyncio.sleep_ms(sleep_duration)
+    
         old_values = values.copy()
 
 if __name__ == "__main__":
-    main()
+    gu = GalacticUnicorn()
+    picoboard = PicoGraphics(DISPLAY)
+
+    show_init_msg()
+    utime.sleep(0.5) # Brief name display before we get into the clock
+
+    # Create an event loop
+    loop = uasyncio.get_event_loop()
+
+    # Create tasks for the coroutines
+    sync_ntp_task = loop.create_task(sync_ntp_periodically())
+    main_task = loop.create_task(main())
+
+    try:
+        # Run the main coroutine
+        loop.run_until_complete(main_task)
+        # Start the periodic NTP synchronization
+        loop.run_until_complete(sync_ntp_task)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        # Close the event loop
+        loop.close()
 
