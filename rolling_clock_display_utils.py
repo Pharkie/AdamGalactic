@@ -7,28 +7,18 @@ Description: Utils that help display and animate the time and date
 GitHub Repository: https://github.com/Pharkie/AdamGalactic/
 License: GNU General Public License (GPL)
 """
-
 import utime
-import urandom
-import uasyncio
-import network
-import ntptime
-from machine import Timer
-import sys
-from galactic import GalacticUnicorn
-from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY
 
 def show_digit(picoboard, font_colour, char_width, char_height, number_to_show, x_pos, y_pos):
     """Display a single digit at the specified position."""
-    picoboard.set_pen(picoboard.create_pen(0, 0, 0))
+    picoboard.set_pen(picoboard.create_pen(0, 0, 0)) # Can't use COLOUR_BLACK, risks a dependency loop between this and main.py
     picoboard.rectangle(x_pos, y_pos, char_width, char_height)
     
-    pen_colour = font_colour
-    picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
+    picoboard.set_pen(font_colour)
     picoboard.text(text = str(number_to_show), x1 = x_pos, y1 = y_pos, wordwrap = -1, scale = 1)
     
 def scroll_digit(params):
-    """Scroll a single digit at the specified position."""
+    """Scroll one vertical row of a single digit at the specified position. Designed to be called in a loop"""
     # Unpack params dictionary
     picoboard = params['picoboard']
     font_colour = params['font_colour']
@@ -49,21 +39,19 @@ def scroll_digit(params):
 
     picoboard.set_clip(x_pos, y_pos, char_width, char_height)
 
-    pen_colour = font_colour
-    picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
+    picoboard.set_pen(font_colour)
     picoboard.text(text=str(top_number), x1=x_pos, y1=y_pos - (loop_num + 1), wordwrap=-1, scale=1)
     picoboard.text(text=str(bottom_number), x1=x_pos, y1=y_pos + char_height - (loop_num + 1), wordwrap=-1, scale=1)
 
     picoboard.remove_clip()
 
 def show_init_msg(picoboard, gu, font_colour, init_msg, x_pos, y_pos):
-    """Display a simple message while we sync the clock on init."""
+    """Display a message at start-up."""
     gu.set_brightness(0.2)
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
     picoboard.clear()
     
-    pen_colour = font_colour
-    picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
+    picoboard.set_pen(font_colour)
     picoboard.text(text = init_msg, x1 = x_pos, y1 = y_pos, wordwrap = -1, scale = 1)
     gu.update(picoboard)
     gu.set_brightness(1.0)

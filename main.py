@@ -7,15 +7,14 @@ via NTP if Wifi is available, taking account of British Summer Time (BST)
 GitHub Repository: https://github.com/Pharkie/AdamGalactic/ClockRolling.py
 License: GNU General Public License (GPL)
 """
-
 import utime
 import urandom
 import uasyncio
 # import sys (only needed for sys.exit()
-from rolling_clock_modules import datetime_utils
-from rolling_clock_modules import rolling_clock_display_utils
 from galactic import GalacticUnicorn
 from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY
+import rolling_clock_display_utils
+import datetime_utils
 
 async def sync_ntp_periodically():
     """Sync the clock at the top of the hour + 0-59 random seconds."""
@@ -24,7 +23,7 @@ async def sync_ntp_periodically():
     
     while True:
         print("sync_ntp_periodically() called")
-        BST_active = datetime_utils.sync_ntp(picoboard, gu, colour_blue)
+        BST_active = datetime_utils.sync_ntp(picoboard, gu, COLOUR_BLUE)
         current_time = utime.localtime()
         
         # Calculate the number of seconds until the next hour
@@ -46,8 +45,8 @@ async def main():
         current_date = utime.localtime()
         date_str = datetime_utils.format_date(current_date)
         # Set the date text color
-        pen_colour_date = colour_grey
-        picoboard.set_pen(picoboard.create_pen(pen_colour_date[0], pen_colour_date[1], pen_colour_date[2]))
+        pen_colour_date = COLOUR_GREY
+        picoboard.set_pen(pen_colour_date)
         picoboard.text(text=date_str, x1=0, y1=all_y + char_height + 1, wordwrap=-1, scale=1)
 
         values = list(datetime_utils.get_time_values(BST_active))
@@ -60,7 +59,7 @@ async def main():
                     # Define digit parameters as a dictionary
                     scroll_digit_params = {
                         'picoboard': picoboard,         # Your picoboard instance
-                        'font_colour': colour_yellow,  # Font color
+                        'font_colour': COLOUR_YELLOW,  # Font color
                         'char_width': char_width,      # Character width
                         'char_height': char_height,    # Character height
                         'reverse': 0,                  # Reverse flag (0 or 1)
@@ -72,10 +71,10 @@ async def main():
                     }
                     rolling_clock_display_utils.scroll_digit(scroll_digit_params)
                 else:
-                    rolling_clock_display_utils.show_digit(picoboard, colour_yellow, char_width, char_height, old_values[j], x_positions[j], all_y)
+                    rolling_clock_display_utils.show_digit(picoboard, COLOUR_YELLOW, char_width, char_height, old_values[j], x_positions[j], all_y)
 
-            pen_colour = colour_yellow if values[5] % 2 == 0 else colour_black
-            picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
+            pen_colour = COLOUR_YELLOW if values[5] % 2 == 0 else COLOUR_BLACK
+            picoboard.set_pen(pen_colour)
             picoboard.text(text = ":", x1 = base_x + (2 * char_width), y1 = all_y, wordwrap = -1, scale = 1)
             picoboard.text(text = ":", x1 = base_x + (4 * char_width) + 3, y1 = all_y, wordwrap = -1, scale = 1)
 
@@ -95,14 +94,16 @@ if __name__ == "__main__":
     # Set global variables
     gu = GalacticUnicorn()
     picoboard = PicoGraphics(DISPLAY)
+
+    # Global variable definitions
+    COLOUR_BLACK = picoboard.create_pen(0, 0, 0)
+    COLOUR_YELLOW = picoboard.create_pen(255, 105, 0)
+    COLOUR_GREY = picoboard.create_pen(96, 96, 96)
+    COLOUR_BLUE = picoboard.create_pen(153, 255, 255)
+
     picoboard.set_font("bitmap6")
     BST_active = False
     
-    colour_black = (0, 0, 0)
-    colour_yellow = (255, 105, 0)
-    colour_grey = (96, 96, 96)
-    colour_blue = (153, 255, 255)
-
     base_x = 9
     char_width = 5
     char_height = 5
@@ -112,7 +113,7 @@ if __name__ == "__main__":
                    base_x + (5 * char_width) + char_width]
     all_y = -1
 
-    rolling_clock_display_utils.show_init_msg(picoboard, gu, colour_blue, "PenClock", 5, 2)
+    rolling_clock_display_utils.show_init_msg(picoboard, gu, COLOUR_BLUE, "PenClock", 5, 2)
 
     # Add tasks for the coroutines to the event loop
     loop = uasyncio.get_event_loop()

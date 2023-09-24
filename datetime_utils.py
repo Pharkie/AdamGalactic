@@ -7,16 +7,9 @@ Description: Utils that operate on datetime
 GitHub Repository: https://github.com/Pharkie/AdamGalactic/
 License: GNU General Public License (GPL)
 """
-
 import utime
-import urandom
-import uasyncio
 import network
 import ntptime
-from machine import Timer
-import sys
-from galactic import GalacticUnicorn
-from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY
 
 def format_date(dt):
     """Format the date as 'DD MMM YYYY'."""
@@ -80,12 +73,11 @@ def sync_ntp(picoboard, gu, font_colour):
     
     print('sync_ntp() called')
     gu.set_brightness(0.2)
-    picoboard.set_pen(picoboard.create_pen(0, 0, 0))
+    picoboard.set_pen(picoboard.create_pen(0, 0, 0)) # Can't use COLOUR_BLACK, risks a dependency loop between this and main.py
     picoboard.clear()
     gu.update(picoboard)
 
-    pen_colour = font_colour
-    picoboard.set_pen(picoboard.create_pen(pen_colour[0], pen_colour[1], pen_colour[2]))
+    picoboard.set_pen(font_colour)
     picoboard.text(text = "Syncing..", x1 = 5, y1 = 2, wordwrap = -1, scale = 1)
     gu.update(picoboard)
     gu.set_brightness(1.0)
@@ -130,7 +122,7 @@ def sync_ntp(picoboard, gu, font_colour):
     wlan.disconnect()
     wlan.active(False)
     
-    picoboard.set_pen(picoboard.create_pen(0, 0, 0))
+    picoboard.set_pen(picoboard.create_pen(0, 0, 0)) # Can't use COLOUR_BLACK, risks a dependency loop between this and main.py
     picoboard.clear()
     gu.update(picoboard)
     
