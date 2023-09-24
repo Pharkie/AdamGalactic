@@ -37,8 +37,10 @@ def last_sunday(year, month):
         weekday = (weekday - 1) % 7
     return int(last_day)
 
-def is_bst(dt):
+def check_BST_active(dt):
     """Check if the current time is within BST (British Summer Time)."""
+    global BST_active
+
     # Check if the given datetime is in DST (BST) considering the 1 am transition
     dst_start = last_sunday(dt[0], 3)  # Last Sunday of March
     dst_end = last_sunday(dt[0], 10)   # Last Sunday of October
@@ -47,11 +49,11 @@ def is_bst(dt):
     if dst_start <= utime.mktime(dt) < dst_end:
         # Check if it's after 1 am on the last Sunday of March and before 2 am on the last Sunday of October
         if (dt[1] == 3 and dt[2] == (dst_start // 86400) + 1 and dt[3] < 1) or (dt[1] == 10 and dt[2] == (dst_end // 86400) and dt[3] < 2):
-            return False  # Not in DST during the 1 am transition
+            BST_active = False  # Not in DST during the 1 am transition
         else:
-            return True   # In DST during other times
+            BST_active = True   # In DST during other times
     else:
-        return False
+        BST_active = False
 
 def show_digit(number_to_show, x_pos, y_pos):
     """Display a single digit at the specified position."""
@@ -81,12 +83,12 @@ def scroll_digit(reverse, top_number, bottom_number, x_pos, y_pos, loop_num):
 
 def get_time_values():
     """Get the current time and split it into individual digits."""
-    global is_BST  # Access the global BST status
+    global BST_active  # Access the global BST status
     
     current_time_tuple = utime.localtime()  # As set by NTP call, if Wifi is available
 
     # If it's BST, add an hour to the current time
-    if is_BST:
+    if BST_active:
         current_time_seconds = utime.mktime(current_time_tuple)
         new_time_seconds = current_time_seconds + 3600
         current_time_tuple = utime.localtime(new_time_seconds)
@@ -122,7 +124,7 @@ def show_init_msg():
     gu.update(picoboard)
     
 def sync_ntp():
-    global is_BST
+    global BST_active
     print('sync_ntp() called')
     gu.set_brightness(0.2)
     picoboard.set_pen(picoboard.create_pen(0, 0, 0))
@@ -165,8 +167,8 @@ def sync_ntp():
 
             # Update the global BST status
             current_time_tuple = utime.localtime()
-            is_BST = is_bst(current_time_tuple)
-            if is_BST:
+            check_BST_active(current_time_tuple);
+            if BST_active:
                 print("Time is BST (UTC+1), so adding an hour.")
             else:
                 print("Time is not BST, so using unmodified UTC.")
@@ -208,10 +210,10 @@ async def main():
         # Get today's date and display it underneath the time
         current_date = utime.localtime()
         date_str = format_date(current_date)
-        # Set the date text color once
+        # Set the date text color
         pen_colour_date = colour_grey
         picoboard.set_pen(picoboard.create_pen(pen_colour_date[0], pen_colour_date[1], pen_colour_date[2]))
-        picoboard.text(text=date_str, x1=1, y1=all_y + char_height + 1, wordwrap=-1, scale=1)
+        picoboard.text(text=date_str, x1=0, y1=all_y + char_height + 1, wordwrap=-1, scale=1)
 
         hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones = get_time_values()
         values = [hours_tens, hours_ones, minutes_tens, minutes_ones, seconds_tens, seconds_ones]
@@ -247,7 +249,7 @@ if __name__ == "__main__":
     gu = GalacticUnicorn()
     picoboard = PicoGraphics(DISPLAY)
     picoboard.set_font("bitmap6")
-    is_BST = False
+    BST_active = False
     
     colour_black = (0, 0, 0)
     colour_yellow = (255, 105, 0)
