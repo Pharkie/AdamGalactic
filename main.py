@@ -13,6 +13,8 @@ import uasyncio
 # import sys (only needed for sys.exit()
 from galactic import GalacticUnicorn
 from picographics import PicoGraphics, DISPLAY_GALACTIC_UNICORN as DISPLAY
+from breakout_bme68x import BreakoutBME68X, STATUS_HEATER_STABLE
+from pimoroni_i2c import PimoroniI2C
 import rolling_clock_display_utils
 import datetime_utils
 
@@ -93,33 +95,50 @@ async def rolling_clock():
 async def scroll_msg():
     print("scroll_msg()")
 
-    msg_text = "The next station will be: Penmaenmawr"
-    p = 53
+    msg_text = "Next stop: Penmaenmawr"
     length = picoboard.measure_text(msg_text, 1)
-    steps = length + 53 # Scroll the msg_text off the the end
+    steps = length + 80 # Scroll the msg_text with a bit of padding, min 53
 
-    picoboard.set_pen(COLOUR_BLACK)
-    gu.clear()
-    picoboard.set_pen(COLOUR_YELLOW)
-    picoboard.text(text=msg_text, x1=20, y1=2, wordwrap=-1, scale=1)
-    gu.update(picoboard)
-    await uasyncio.sleep(5)
-
-#     for count in range(steps):
-#         picoboard.set_pen(COLOUR_BLACK)
-#         gu.clear()
-#         picoboard.set_pen(COLOUR_YELLOW)
-#         picoboard.text(text=msg_text, x1=p, y1=2, wordwrap=-1, scale=1)  # Removed str() around msg_text
-#         gu.update(picoboard)
-#         p -= 1
-#         await uasyncio.sleep(0.18)
+    while True: # Loop forever
+        p = 53
+        for count in range(steps):
+            picoboard.set_pen(COLOUR_BLACK)
+            picoboard.clear()
+            picoboard.set_pen(COLOUR_YELLOW)
+            picoboard.text(text=msg_text, x1=p, y1=2, wordwrap=-1, scale=1)  # Removed str() around msg_text
+            gu.update(picoboard)
+            p -= 1
+            await uasyncio.sleep(0.03)
     
 async def show_temp():
     print("show_temp()")
+    
+    PINS_BREAKOUT_GARDEN = {"sda": 4, "scl": 5}
+
+    i2c = PimoroniI2C(**PINS_BREAKOUT_GARDEN)
+
+    bme = BreakoutBME68X(i2c)
+    
+    temperature_reading, pressure_reading, humidity_reading, gas_reading, status_reading, _, _ = bme.read()
+    heater = "Stable" if status_reading & STATUS_HEATER_STABLE else "Unstable"
+    #print("{:0.2f}c, {:0.2f}Pa, {:0.2f}%, {:0.2f} Ohms, Heater: {}".format(temperature, pressure, humidity, gas, heater))
+    #formatted_data = "{:0.2f}c, {:0.2f}Pa, {:0.2f}%, {:0.2f} Ohms, Heater: {}".format(temperature, pressure, humidity, gas, heater)
+    
+    msg_text = "Temp: {:.0f}c".format(round(temperature_reading))
+
+    picoboard.set_pen(COLOUR_BLACK)
+    picoboard.clear()
+    picoboard.set_pen(COLOUR_GREY)
+    picoboard.text(text=msg_text, x1=5, y1=2, wordwrap=-1, scale=1)  # Removed str() around msg_text
+    gu.update(picoboard)
+    
+    await uasyncio.sleep(50) # Task will be cut short elsewhere
 
 async def main():
-    task_names = [scroll_msg, rolling_clock]  # List of task names
+    task_names = [show_temp, scroll_msg, rolling_clock]  # List of task names
     current_task_index = 0  # Initialize the current task index
+    
+    CHANGE_INTERVAL = 6
     
     while True:
         # Get the next task name from the list
@@ -129,7 +148,7 @@ async def main():
         current_task = loop.create_task(current_task_name())
         
         secs_passed = 0
-        secs_target = 5 + urandom.randint(0, 5) # Run for 5-10 seconds
+        secs_target = CHANGE_INTERVAL + urandom.randint(0, round(CHANGE_INTERVAL*0.2)) # Run for 5-10 seconds
         print("Running", current_task_name.__name__, "for", secs_target, "seconds")
         
         while secs_passed < secs_target:
@@ -174,7 +193,7 @@ if __name__ == "__main__":
     # Add tasks for the coroutines to the event loop
     loop = uasyncio.get_event_loop()
     main_task = loop.create_task(main())
-    sync_ntp_task = loop.create_task(sync_ntp_periodically())
+    #sync_ntp_task = loop.create_task(sync_ntp_periodically())
 
     try:
         # Run all tasks forever
