@@ -30,12 +30,12 @@ async def sync_ntp_periodically():
         seconds_until_next_hour = 3600 - current_time[5] - (60 * current_time[4])
         
         # Add a random number of seconds between 0 and 59 (1 minute)
-        next_sync_in = seconds_until_next_hour + urandom.randint(0, 59)
+        next_sync_secs = seconds_until_next_hour + urandom.randint(0, 59)
         
-        print("Next sync in (secs): ", next_sync_in)
-        await uasyncio.sleep(next_sync_in)  # Sleep for the calculated duration
+        print("Next sync in (secs): ", next_sync_secs)
+        await uasyncio.sleep(next_sync_secs)  # Sleep for the calculated duration
 
-async def main():
+async def rolling_clock():
     old_values = datetime_utils.get_time_values(BST_active)
         
     while True:
@@ -90,6 +90,62 @@ async def main():
 
         old_values = values.copy()
 
+async def scroll_msg():
+    print("scroll_msg()")
+
+    msg_text = "The next station will be: Penmaenmawr"
+    p = 53
+    length = picoboard.measure_text(msg_text, 1)
+    steps = length + 53 # Scroll the msg_text off the the end
+
+    picoboard.set_pen(COLOUR_BLACK)
+    gu.clear()
+    picoboard.set_pen(COLOUR_YELLOW)
+    picoboard.text(text=msg_text, x1=20, y1=2, wordwrap=-1, scale=1)
+    gu.update(picoboard)
+    await uasyncio.sleep(5)
+
+#     for count in range(steps):
+#         picoboard.set_pen(COLOUR_BLACK)
+#         gu.clear()
+#         picoboard.set_pen(COLOUR_YELLOW)
+#         picoboard.text(text=msg_text, x1=p, y1=2, wordwrap=-1, scale=1)  # Removed str() around msg_text
+#         gu.update(picoboard)
+#         p -= 1
+#         await uasyncio.sleep(0.18)
+    
+async def show_temp():
+    print("show_temp()")
+
+async def main():
+    task_names = [scroll_msg, rolling_clock]  # List of task names
+    current_task_index = 0  # Initialize the current task index
+    
+    while True:
+        # Get the next task name from the list
+        current_task_name = task_names[current_task_index]
+        
+        # Create a task using the next task name
+        current_task = loop.create_task(current_task_name())
+        
+        secs_passed = 0
+        secs_target = 5 + urandom.randint(0, 5) # Run for 5-10 seconds
+        print("Running", current_task_name.__name__, "for", secs_target, "seconds")
+        
+        while secs_passed < secs_target:
+            await uasyncio.sleep(1)
+            secs_passed += 1
+            
+        current_task.cancel()
+        
+        picoboard.set_pen(picoboard.create_pen(0, 0, 0))
+        picoboard.clear()
+        gu.update(picoboard)
+        
+        # Increment the current task index, cycling through the list
+        current_task_index = (current_task_index + 1) % len(task_names)
+
+
 if __name__ == "__main__":
     # Set global variables
     gu = GalacticUnicorn()
@@ -128,5 +184,3 @@ if __name__ == "__main__":
     finally:
         # Close the event loop
         loop.close()
-
-

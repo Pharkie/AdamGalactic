@@ -101,7 +101,7 @@ def sync_ntp(picoboard, gu, font_colour):
             break
         max_wait -= 1
         print('Waiting for Wifi to connect')
-        utime.sleep(0.3) # This is not using async because we need to block the clock from display updates until the sync is complete
+        utime.sleep(0.3) # Doesn't use async await to block the clock from display updates until the sync is complete
 
     if max_wait > 0:
         print("Connected")
