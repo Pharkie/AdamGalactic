@@ -10,6 +10,9 @@ License: GNU General Public License (GPL)
 import utime
 import network
 import ntptime
+import uasyncio
+import urandom
+import config
 
 def format_date(dt):
     """Format the date as 'DD MMM YYYY'."""
@@ -46,12 +49,12 @@ def check_BST_active(dt):
     else:
         return False
     
-def get_time_values(BST_active):
+def get_time_values():
     """Get the current time and split it into individual digits."""
     current_time_tuple = utime.localtime()  # As set by NTP call, if Wifi is available
 
     # If it's BST, add an hour to the current time
-    if BST_active:
+    if config.BST_active:
         current_time_seconds = utime.mktime(current_time_tuple)
         new_time_seconds = current_time_seconds + 3600
         current_time_tuple = utime.localtime(new_time_seconds)
@@ -68,22 +71,22 @@ def get_time_values(BST_active):
         seconds_tens, seconds_ones
     )
 
-def sync_ntp(picoboard, gu, font_colour):
+def sync_ntp():
     """Turn on wifi, sync RTC to NTP, turn wifi off, return BST_active True or False."""
     
     print('sync_ntp() called')
-    gu.set_brightness(0.2)
-    picoboard.set_pen(picoboard.create_pen(0, 0, 0)) # Can't use COLOUR_BLACK, risks a dependency loop between this and main.py
-    picoboard.clear()
-    gu.update(picoboard)
+    config.gu.set_brightness(0.2)
+    config.picoboard.set_pen(config.COLOUR_BLACK)
+    config.picoboard.clear()
+    config.gu.update(config.picoboard)
 
-    picoboard.set_pen(font_colour)
-    picoboard.text(text = "Syncing..", x1 = 5, y1 = 2, wordwrap = -1, scale = 1)
-    gu.update(picoboard)
-    gu.set_brightness(1.0)
+    config.picoboard.set_pen(config.COLOUR_BLUE)
+    config.picoboard.text(text = "Syncing..", x1 = 5, y1 = 2, wordwrap = -1, scale = 1)
+    config.gu.update(config.picoboard)
+    config.gu.set_brightness(1.0)
 
     try:
-        from secrets import WIFI_SSID, WIFI_PASSWORD # type: ignore
+        from secrets import WIFI_SSID, WIFI_PASSWORD
     except ImportError:
         print("Create secrets.py with your WiFi credentials to get time from NTP")
         return
@@ -112,7 +115,7 @@ def sync_ntp(picoboard, gu, font_colour):
 
             # Update the global BST status
             current_time_tuple = utime.localtime()
-            BST_active = check_BST_active(current_time_tuple);
+            config.BST_active = check_BST_active(current_time_tuple);
         except OSError:
             print("Failed to set time")
             pass
@@ -122,13 +125,28 @@ def sync_ntp(picoboard, gu, font_colour):
     wlan.disconnect()
     wlan.active(False)
     
-    picoboard.set_pen(picoboard.create_pen(0, 0, 0)) # Can't use COLOUR_BLACK, risks a dependency loop between this and main.py
-    picoboard.clear()
-    gu.update(picoboard)
+    config.picoboard.set_pen(config.COLOUR_BLACK)
+    config.picoboard.clear()
+    config.gu.update(config.picoboard)
     
-    if BST_active:
-        print("BST (UTC+1) set to True.")
-    else:
-        print("BST set to False.")
-    
-    return BST_active
+async def sync_ntp_periodically():
+    try:        
+        while True:
+            print("sync_ntp_periodically() called")
+            sync_ntp()
+            current_time = utime.localtime()
+            
+            # Calculate the number of seconds until the next hour
+            seconds_until_next_hour = 3600 - current_time[5] - (60 * current_time[4])
+            
+            # Add a random number of seconds between 0 and 59 (1 minute)
+            next_sync_secs = seconds_until_next_hour + urandom.randint(0, 59)
+            
+            print("Next sync in (secs): ", next_sync_secs)
+            await uasyncio.sleep(next_sync_secs)  # Sleep for the calculated duration
+    except Exception as e:
+        # Handle exceptions, e.g., log the error or take appropriate action
+        print("Error in sync_ntp_periodically:", e)
+    finally:
+        # Cleanup code, if needed. Nothing to clean up?
+        print("sync_ntp_periodically() complete")
