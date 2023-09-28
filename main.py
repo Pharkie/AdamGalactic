@@ -61,7 +61,7 @@ async def rolling_clock():
                     # Define digit parameters as a dictionary
                     scroll_digit_params = {
                         'picoboard': picoboard,         # Your picoboard instance
-                        'font_colour': COLOUR_YELLOW,  # Font color
+                        'font_colour': COLOUR_YELLOW,  # Font color # type: ignore
                         'char_width': char_width,      # Character width
                         'char_height': char_height,    # Character height
                         'reverse': 0,                  # Reverse flag (0 or 1)

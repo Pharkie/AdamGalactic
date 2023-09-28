@@ -83,7 +83,7 @@ def sync_ntp(picoboard, gu, font_colour):
     gu.set_brightness(1.0)
 
     try:
-        from secrets import WIFI_SSID, WIFI_PASSWORD
+        from secrets import WIFI_SSID, WIFI_PASSWORD # type: ignore
     except ImportError:
         print("Create secrets.py with your WiFi credentials to get time from NTP")
         return
