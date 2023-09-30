@@ -71,31 +71,12 @@ def get_time_values():
         seconds_tens, seconds_ones
     )
 
-def sync_ntp():
-    """Turn on wifi, sync RTC to NTP, turn wifi off, return BST_active True or False."""
-    
-    print('sync_ntp() called')
-    config.gu.set_brightness(0.2)
-    config.picoboard.set_pen(config.COLOUR_BLACK)
-    config.picoboard.clear()
-    config.gu.update(config.picoboard)
-
-    config.picoboard.set_pen(config.COLOUR_BLUE)
-    config.picoboard.text(text = "Syncing..", x1 = 5, y1 = 2, wordwrap = -1, scale = 1)
-    config.gu.update(config.picoboard)
-    config.gu.set_brightness(1.0)
-
-    try:
-        from secrets import WIFI_SSID, WIFI_PASSWORD
-    except ImportError:
-        print("Create secrets.py with your WiFi credentials to get time from NTP")
-        return
-
-    # Start connection
+def connect_wifi():
+    """Connect to Wi-Fi and return True if successful, False otherwise."""
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
-    wlan.config(pm=0xa11140)  # Turn WiFi power saving off for some slow APs
-    wlan.connect(WIFI_SSID, WIFI_PASSWORD)
+    wlan.config(pm=0xa11140)  # Turn WiFi power saving off for some slow APs # type: ignore
+    wlan.connect(config.WIFI_SSID, config.WIFI_PASSWORD) # type: ignore
 
     # Wait for connect success or failure
     max_wait = 20
@@ -108,24 +89,52 @@ def sync_ntp():
 
     if max_wait > 0:
         print("Connected")
-
-        try:
-            ntptime.settime() # No parameters available for DST offset
-            print("Time set from NTP")
-
-            # Update the global BST status
-            current_time_tuple = utime.localtime()
-            config.BST_active = check_BST_active(current_time_tuple);
-        except OSError:
-            print("Failed to set time")
-            pass
+        return True
     else:
         print("Timed out waiting for Wifi")
+        return False
 
+def disconnect_wifi():
+    """Disconnect from Wi-Fi."""
+    
+    print('disconnect_wifi() called')
+    wlan = network.WLAN(network.STA_IF)
     wlan.disconnect()
     wlan.active(False)
+
+def sync_ntp():
+    """Turn on wifi, sync RTC to NTP, turn wifi off, return BST_active True or False."""
     
-    config.picoboard.set_pen(config.COLOUR_BLACK)
+    print('sync_ntp() called')
+    config.gu.set_brightness(0.2)
+    config.picoboard.set_pen(config.PEN_BLACK)
+    config.picoboard.clear()
+    config.gu.update(config.picoboard)
+
+    config.picoboard.set_pen(config.PEN_BLUE)
+    config.picoboard.text(text = "Syncing..", x1 = 5, y1 = 2, wordwrap = -1, scale = 1)
+    config.gu.update(config.picoboard)
+    config.gu.set_brightness(1.0)
+
+    # Connect to Wi-Fi
+    if not connect_wifi():
+        return False
+
+    try:
+        ntptime.settime() # No parameters available for DST offset
+        print("Time set from NTP")
+
+        # Update the global BST status
+        current_time_tuple = utime.localtime()
+        config.BST_active = check_BST_active(current_time_tuple);
+    except OSError:
+        print("Failed to set time")
+        pass
+
+    # Disconnect from Wi-Fi
+    #disconnect_wifi()
+    
+    config.picoboard.set_pen(config.PEN_BLACK)
     config.picoboard.clear()
     config.gu.update(config.picoboard)
     

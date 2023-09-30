@@ -17,60 +17,42 @@ import temp_etc_utils
 import rolling_clock_display_utils
 import panel_main_functions
 
-def random_choice(probabilities):
-    rand_num = urandom.randint(1, sum(probabilities))
-    cumulative_prob = 0
-    for i, prob in enumerate(probabilities):
-        cumulative_prob += prob
-        if rand_num <= cumulative_prob:
-            return i
-
 async def main():
-    tasks_and_probabilities = [ # Doesn't matter if these don't add up to 100, will use relative weights
-        (panel_main_functions.scroll_msg, 30),
-        (panel_main_functions.rolling_clock, 30),
-        (temp_etc_utils.show_temp, 30),
-        (temp_etc_utils.show_humidity, 10),
-        (temp_etc_utils.show_pressure, 10),
-        (temp_etc_utils.show_gas, 10),
+    tasks = [
+        panel_main_functions.scroll_msg,
+        temp_etc_utils.show_temp,
+        panel_main_functions.next_bus_info,
+        temp_etc_utils.show_humidity,
+        temp_etc_utils.show_pressure,
+        temp_etc_utils.show_gas,
     ]
     
-    current_task_index = -1  # Initialize to -1 to ensure the first task is randomly selected
-    
-    n = 0
-    
     while True:
-        n += 1
-        # Randomly select a task based on probabilities, excluding the last selected task
-        while True:
-            new_task_index = random_choice([prob for _, prob in tasks_and_probabilities])
-            if new_task_index != current_task_index:
-                current_task_index = new_task_index
-                break
+        # Shuffle the indices of the tasks using the Fisher-Yates shuffle algorithm
+        # implemented using urandom.getrandbits(32) to generate random numbers.
+        indices = list(range(len(tasks)))
+        for i in range(len(tasks) - 1, 0, -1):
+            j = urandom.getrandbits(32) % (i + 1)
+            indices[i], indices[j] = indices[j], indices[i]
         
-        current_task, task_probability = tasks_and_probabilities[current_task_index] # type: ignore
-        current_task_name = current_task.__name__
-        current_task = loop.create_task(current_task())
+        for i, index in enumerate(indices): # Run the tasks in the shuffled order
+            current_task = tasks[index] if i % 2 == 0 else panel_main_functions.rolling_clock
+            current_task_name = current_task.__name__
+            current_task_probability = 100 // len(tasks)
+            current_task = loop.create_task(current_task())
+            
+            secs_target = config.CHANGE_INTERVAL + urandom.randint(0, round(config.CHANGE_INTERVAL * 0.2))
+            print("Running", current_task_name, "for", secs_target, "seconds")
+            
+            await uasyncio.sleep(secs_target)
+            
+            current_task.cancel()
+            
+            print("Completed task", current_task_name)
         
-        secs_passed = 0
-        secs_target = config.CHANGE_INTERVAL + urandom.randint(0, round(config.CHANGE_INTERVAL * 0.2))
-        print("Running", current_task_name, "for", secs_target, "seconds")
-        
-        try:
-            while secs_passed < secs_target:
-                await uasyncio.sleep(1)
-                secs_passed += 1
-        except asyncio.CancelledError: # type: ignore
-            print("asyncio CancelledError")
-            pass  # Handle the task being canceled
-        
-        current_task.cancel()
-        
-        print("Completed task", n)
-        
-        config.picoboard.set_pen(config.picoboard.create_pen(0, 0, 0))
-        config.picoboard.clear()
-        config.gu.update(config.picoboard)
+            config.picoboard.set_pen(config.PEN_BLACK)
+            config.picoboard.clear()
+            config.gu.update(config.picoboard)
 
 
 if __name__ == "__main__":

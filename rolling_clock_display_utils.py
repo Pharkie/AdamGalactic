@@ -15,7 +15,7 @@ def show_digit(char_width, char_height, number_to_show, x_pos, y_pos):
     config.picoboard.set_pen(config.picoboard.create_pen(0, 0, 0)) # Can't use COLOUR_BLACK, risks a dependency loop between this and main.py
     config.picoboard.rectangle(x_pos, y_pos, char_width, char_height)
     
-    config.picoboard.set_pen(config.COLOUR_YELLOW)
+    config.picoboard.set_pen(config.PEN_YELLOW)
     config.picoboard.text(text = str(number_to_show), x1 = x_pos, y1 = y_pos, wordwrap = -1, scale = 1)
     
 def scroll_digit(params):
@@ -31,12 +31,12 @@ def scroll_digit(params):
     # Don't know why, but this is needed
     y_pos = y_pos + 1
 
-    config.picoboard.set_pen(config.COLOUR_BLACK)
+    config.picoboard.set_pen(config.PEN_BLACK)
     config.picoboard.rectangle(x_pos, y_pos, config.char_width, config.char_height)
 
     config.picoboard.set_clip(x_pos, y_pos, config.char_width, config.char_height)
 
-    config.picoboard.set_pen(config.COLOUR_YELLOW)
+    config.picoboard.set_pen(config.PEN_YELLOW)
     config.picoboard.text(text=str(top_number), x1=x_pos, y1=y_pos - (loop_num + 1), wordwrap=-1, scale=1)
     config.picoboard.text(text=str(bottom_number), x1=x_pos, y1=y_pos + config.char_height - (loop_num + 1), wordwrap=-1, scale=1)
 
@@ -45,10 +45,10 @@ def scroll_digit(params):
 def show_init_msg(init_msg, x_pos, y_pos):
     """Display a message at start-up."""
 
-    font_colour = config.COLOUR_BLUE
+    font_colour = config.PEN_BLUE
     
     config.gu.set_brightness(0.2)
-    config.picoboard.set_pen(config.COLOUR_BLACK)
+    config.picoboard.set_pen(config.PEN_BLACK)
     config.picoboard.clear()
     
     config.picoboard.set_pen(font_colour)
@@ -57,6 +57,6 @@ def show_init_msg(init_msg, x_pos, y_pos):
     config.gu.set_brightness(1.0)
     utime.sleep(0.5) # Brief name display before we get into the clock
 
-    config.picoboard.set_pen(config.COLOUR_BLACK)
+    config.picoboard.set_pen(config.PEN_BLACK)
     config.picoboard.clear()
     config.gu.update(config.picoboard)
