@@ -7,14 +7,15 @@ GitHub Repository: https://github.com/Pharkie/AdamGalactic/ClockRolling.py
 License: GNU General Public License (GPL)
 """
 
+import uasyncio
+import utime
 import config
 import datetime_utils
 import rolling_clock_display_utils
-import uasyncio
 
 async def rolling_clock():
     try:
-        old_values = datetime_utils.get_time_values(BST_active)
+        old_values = datetime_utils.get_time_values()
         
         while True:
             start_time = utime.ticks_ms()
@@ -25,9 +26,9 @@ async def rolling_clock():
             # Set the date text color
             pen_colour_date = config.COLOUR_GREY
             config.picoboard.set_pen(pen_colour_date)
-            config.picoboard.text(text=date_str, x1=0, y1=all_y + char_height + 1, wordwrap=-1, scale=1)
+            config.picoboard.text(text=date_str, x1=0, y1=config.all_y + config.char_height + 1, wordwrap=-1, scale=1)
 
-            values = list(datetime_utils.get_time_values(BST_active))
+            values = list(datetime_utils.get_time_values())
 
             tick_flags = [values[i] != old_values[i] for i in range(6)]
 
@@ -36,25 +37,21 @@ async def rolling_clock():
                     if tick_flags[j]: # Scroll that digit one row
                         # Define digit parameters as a dictionary
                         scroll_digit_params = {
-                            'config.picoboard': config.picoboard,         # Your config.picoboard instance
-                            'font_colour': config.COLOUR_YELLOW,  # Font color
-                            'char_width': char_width,      # Character width
-                            'char_height': char_height,    # Character height
                             'reverse': 0,                  # Reverse flag (0 or 1)
                             'top_number': old_values[j],   # Top number to display
                             'bottom_number': values[j],    # Bottom number to display
-                            'x_pos': x_positions[j],                   # X position
-                            'y_pos': all_y,                   # Y position
+                            'x_pos': config.x_positions[j],                   # X position
+                            'y_pos': config.all_y,                   # Y position
                             'loop_num': i                  # Loop number
                         }
                         rolling_clock_display_utils.scroll_digit(scroll_digit_params)
                     else:
-                        rolling_clock_display_utils.show_digit(char_width, char_height, old_values[j], x_positions[j], all_y)
+                        rolling_clock_display_utils.show_digit(config.char_width, config.char_height, old_values[j], config.x_positions[j], config.all_y)
 
                 pen_colour = config.COLOUR_YELLOW if values[5] % 2 == 0 else config.COLOUR_BLACK
                 config.picoboard.set_pen(pen_colour)
-                config.picoboard.text(text = ":", x1 = base_x + (2 * char_width), y1 = all_y, wordwrap = -1, scale = 1)
-                config.picoboard.text(text = ":", x1 = base_x + (4 * char_width) + 3, y1 = all_y, wordwrap = -1, scale = 1)
+                config.picoboard.text(text = ":", x1 = config.base_x + (2 * config.char_width), y1 = config.all_y, wordwrap = -1, scale = 1)
+                config.picoboard.text(text = ":", x1 = config.base_x + (4 * config.char_width) + 3, y1 = config.all_y, wordwrap = -1, scale = 1)
 
                 config.gu.update(config.picoboard)
                 utime.sleep(0.05)

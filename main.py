@@ -8,11 +8,8 @@ GitHub Repository: https://github.com/Pharkie/AdamGalactic/ClockRolling.py
 License: GNU General Public License (GPL)
 """
 # Micropython libs
-import utime
 import urandom
 import uasyncio
-# import sys (only needed for sys.exit()
-# Panel hardware
 # My project
 import config
 import datetime_utils
@@ -51,7 +48,7 @@ async def main():
                 current_task_index = new_task_index
                 break
         
-        current_task, task_probability = tasks_and_probabilities[current_task_index]
+        current_task, task_probability = tasks_and_probabilities[current_task_index] # type: ignore
         current_task_name = current_task.__name__
         current_task = loop.create_task(current_task())
         
@@ -63,7 +60,7 @@ async def main():
             while secs_passed < secs_target:
                 await uasyncio.sleep(1)
                 secs_passed += 1
-        except asyncio.CancelledError:
+        except asyncio.CancelledError: # type: ignore
             print("asyncio CancelledError")
             pass  # Handle the task being canceled
         
@@ -93,4 +90,3 @@ if __name__ == "__main__":
     finally:
         # Close the event loop
         loop.close()
-

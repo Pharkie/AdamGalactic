@@ -15,16 +15,12 @@ def show_digit(char_width, char_height, number_to_show, x_pos, y_pos):
     config.picoboard.set_pen(config.picoboard.create_pen(0, 0, 0)) # Can't use COLOUR_BLACK, risks a dependency loop between this and main.py
     config.picoboard.rectangle(x_pos, y_pos, char_width, char_height)
     
-    config.picoboard.set_pen(font_colour)
+    config.picoboard.set_pen(config.COLOUR_YELLOW)
     config.picoboard.text(text = str(number_to_show), x1 = x_pos, y1 = y_pos, wordwrap = -1, scale = 1)
     
 def scroll_digit(params):
     """Scroll one vertical row of a single digit at the specified position. Designed to be called in a loop"""
     # Unpack params dictionary
-    config.picoboard = params['config.picoboard']
-    font_colour = params['font_colour']
-    char_width = params['char_width']
-    char_height = params['char_height']
     reverse = params['reverse']
     top_number = params['top_number']
     bottom_number = params['bottom_number']
@@ -36,13 +32,13 @@ def scroll_digit(params):
     y_pos = y_pos + 1
 
     config.picoboard.set_pen(config.COLOUR_BLACK)
-    config.picoboard.rectangle(x_pos, y_pos, char_width, char_height)
+    config.picoboard.rectangle(x_pos, y_pos, config.char_width, config.char_height)
 
-    config.picoboard.set_clip(x_pos, y_pos, char_width, char_height)
+    config.picoboard.set_clip(x_pos, y_pos, config.char_width, config.char_height)
 
-    config.picoboard.set_pen(font_colour)
+    config.picoboard.set_pen(config.COLOUR_YELLOW)
     config.picoboard.text(text=str(top_number), x1=x_pos, y1=y_pos - (loop_num + 1), wordwrap=-1, scale=1)
-    config.picoboard.text(text=str(bottom_number), x1=x_pos, y1=y_pos + char_height - (loop_num + 1), wordwrap=-1, scale=1)
+    config.picoboard.text(text=str(bottom_number), x1=x_pos, y1=y_pos + config.char_height - (loop_num + 1), wordwrap=-1, scale=1)
 
     config.picoboard.remove_clip()
 
