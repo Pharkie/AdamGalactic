@@ -23,45 +23,41 @@ import panel_liveshow
 async def main():
     print("main() called")
 
-    tasks = [
-        (panel_attract_functions.scroll_msg, "Next stop: Penmaenmawr"),
-        (temp_etc_utils.show_temp, None),
+    attract_tasks = [
         (panel_attract_functions.next_bus_info, None),
         (panel_attract_functions.piccadilly_line_status, None),
+        (panel_attract_functions.rolling_clock, None),
+        (panel_attract_functions.scroll_msg, "Next stop: Penmaenmawr"),
+        (temp_etc_utils.show_temp, None),
         (temp_etc_utils.show_humidity, None),
         (temp_etc_utils.show_pressure, None),
         (temp_etc_utils.show_gas, None),
-        (panel_attract_functions.rolling_clock, None),
     ]
-
+    
     while True:
         # Shuffle the indices of the tasks using the Fisher-Yates shuffle algorithm
         # implemented using urandom.getrandbits(32) to generate random numbers.
-        indices = list(range(len(tasks)))
-        for i in range(len(tasks) - 1, 0, -1):
+        indices = list(range(len(attract_tasks)))
+        for i in range(len(attract_tasks) - 1, 0, -1):
             j = urandom.getrandbits(32) % (i + 1)
             indices[i], indices[j] = indices[j], indices[i]
         
         for i, index in enumerate(indices): # Run the tasks in the shuffled order
-            task_fn, arg = tasks[index]
+            task_fn, arg = attract_tasks[index]
             current_task_name = task_fn.__name__
-            current_task_probability = 100 // len(tasks)
-            current_task = loop.create_task(task_fn(arg) if arg is not None else task_fn())
-            
+                        
             # Allow certain tasks to complete in their own time i.e. to scroll the whole message once. Means they can execute beyond the timeout.
             if current_task_name in ["piccadilly_line_status", "next_bus_info", "scroll_msg"]: 
                 print(f"Running {current_task_name} with no timeout")
-                await current_task
+                await (task_fn(arg) if arg is not None else task_fn)()
             else:
                 secs_target = config.CHANGE_INTERVAL + urandom.randint(0, round(config.CHANGE_INTERVAL * 0.2))
                 print(f"Running {current_task_name} for up to {secs_target} seconds")
                 
                 try:
-                    await uasyncio.wait_for(current_task, timeout=secs_target)
+                    await uasyncio.wait_for(task_fn(arg) if arg is not None else task_fn(), timeout=secs_target)
                 except uasyncio.TimeoutError:
                     pass
-                
-                current_task.cancel()
                 
                 print(f"Completed task {current_task_name}")
             
@@ -136,6 +132,10 @@ if __name__ == "__main__":
         (temp_etc_utils.show_gas, None),
         (panel_attract_functions.rolling_clock, None),
     ]
+
+    # liveshow_tasks = [
+    #     (panel_liveshow.main, None),
+    # ]
 
     # Add the attract tasks to the event loop. Creates vars that can be accessed in functions to cancel or restart.
     sync_ntp_task = loop.create_task(datetime_utils.sync_ntp_periodically())

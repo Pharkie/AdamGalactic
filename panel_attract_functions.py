@@ -87,11 +87,12 @@ async def scroll_msg(msg_text):
     print("scroll_msg() complete")
 
 async def next_bus_info():
-    print("next_bus_info()")
+    print("next_bus_info() called")
 
     wlan = network.WLAN(network.STA_IF)
     if wlan.isconnected():
-        # Bit of exception handling in case internet doesn't do what we expect
+        print("Wifi connected so running TFL.next_buses()")
+        # Exception handling in case internet doesn't do what we expect
         try:
             next_bus_times = await TFL.next_buses()
         except Exception as e:
@@ -111,11 +112,12 @@ async def next_bus_info():
         print("Not running TFL.next_buses(): wifi is not connected")
 
 async def piccadilly_line_status():
-    print("piccadilly_line_status()")
+    print("piccadilly_line_status() called")
 
     wlan = network.WLAN(network.STA_IF)
     if wlan.isconnected():
-        # Bit of exception handling in case internet doesn't do what we expect
+        print("Wifi connected so running TFL.line_status(\"piccadilly\"")
+        # Exception handling in case internet doesn't do what we expect
         try:
             line_status = await TFL.line_status("piccadilly")
         except Exception as e:
