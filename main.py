@@ -79,10 +79,10 @@ async def stop_attract_start_show():
     sync_ntp_task.cancel()
 
     # Stop events in the tasks list
-    for task in tasks:
+    for attract_task in attract_tasks:
         # Most of these tasks won't exist to call .cancel() on, so catch the exception and pass it
         try:
-            task[0].cancel()
+            attract_task[0].cancel()
         except AttributeError:
             pass
     
@@ -97,7 +97,7 @@ def stop_show_start_attract():
     print("stop_show_start_attract()") # Also starts when the show stops naturally i.e. not via a received command
     global main_task, sync_ntp_task # Let's not create new vars in this scope
 
-    # TODO: stop the show?
+    # TODO: stop the show? Not needed if the show stops naturally. Only if need a command to stop the show out of sequence.
     # Add the attract tasks back to the event loop, using the vars from global scope
     main_task = loop.create_task(main())
     sync_ntp_task = loop.create_task(datetime_utils.sync_ntp_periodically())
@@ -126,7 +126,7 @@ if __name__ == "__main__":
     loop = uasyncio.get_event_loop()
 
     # Tasks need to be defined here so they are accessible by both main() and stop_attract_start_show()
-    tasks = [
+    attract_tasks = [
         (panel_attract_functions.scroll_msg, "Next stop: Penmaenmawr"),
         (temp_etc_utils.show_temp, None),
         (panel_attract_functions.next_bus_info, None),
