@@ -139,23 +139,13 @@ def sync_ntp():
     config.gu.update(config.picoboard)
     
 async def sync_ntp_periodically():
-    try:        
-        while True:
-            print("sync_ntp_periodically() called")
-            sync_ntp()
-            current_time = utime.localtime()
-            
-            # Calculate the number of seconds until the next hour
-            seconds_until_next_hour = 3600 - current_time[5] - (60 * current_time[4])
-            
-            # Add a random number of seconds between 0 and 59 (1 minute)
-            next_sync_secs = seconds_until_next_hour + urandom.randint(0, 59)
-            
-            print("Next sync in (secs): ", next_sync_secs)
-            await uasyncio.sleep(next_sync_secs)  # Sleep for the calculated duration
-    except Exception as e:
-        # Handle exceptions, e.g., log the error or take appropriate action
-        print("Error in sync_ntp_periodically:", e)
-    finally:
-        # Cleanup code, if needed. Nothing to clean up?
-        print("sync_ntp_periodically() complete")
+    while True:
+        print("sync_ntp_periodically() called")
+        sync_ntp()
+        current_time = utime.localtime()
+         
+        # Calculate the number of seconds until the next hour, add a random offset
+        next_sync_secs = 3600 - current_time[5] - (60 * current_time[4]) + urandom.randint(0, 59)
+        
+        print(f"sync_ntp_periodically() complete. Next sync in (secs): {next_sync_secs} secs")
+        await uasyncio.sleep(next_sync_secs)  # Sleep for the calculated duration

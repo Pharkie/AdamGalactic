@@ -39,7 +39,34 @@ async def next_buses():
 
     return times_str
 
-# async def main(): # Way to test this solo
+# line_id can be e.g. piccadilly, bakerloo, victoria
+async def line_status(line_id):
+    # Check if Wi-Fi is connected
+    wlan = network.WLAN(network.STA_IF)
+    if not wlan.isconnected():
+        print("Wi-Fi is not connected")
+        return []
+
+    # Make the API request
+    url = f"https://api.tfl.gov.uk/Line/{line_id}/Status"
+    response = urequests.get(url)
+    data = json.loads(response.text)
+
+    # Find the status of the specified line
+    line_status = None
+    for line in data:
+        if line["id"] == line_id:
+            line_status = line["lineStatuses"][0]["statusSeverityDescription"]
+            break
+
+    if line_status is None:
+        print(f"No {line_id} line status")
+        return []
+
+    print(f"{line_id} line status:", line_status)
+    return line_status
+
+# async def main(): # Test this solo
 #     # Connect to Wi-Fi
 #     datetime_utils.connect_wifi()
 
