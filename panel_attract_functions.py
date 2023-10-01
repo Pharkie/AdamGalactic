@@ -9,6 +9,7 @@ License: GNU General Public License (GPL)
 
 import uasyncio
 import utime
+import network
 import config
 import datetime_utils
 import rolling_clock_display_utils
@@ -88,33 +89,44 @@ async def scroll_msg(msg_text):
 async def next_bus_info():
     print("next_bus_info()")
 
-    # Bit of exception handling in case internet doesn't do what we expect
-    try:
-        next_bus_times = await TFL.next_buses()
-    except Exception as e:
-        print("Error getting next bus times:", e)
-        next_bus_times = []
+    wlan = network.WLAN(network.STA_IF)
+    if wlan.isconnected():
+        # Bit of exception handling in case internet doesn't do what we expect
+        try:
+            next_bus_times = await TFL.next_buses()
+        except Exception as e:
+            print("Error getting next bus times:", e)
+            next_bus_times = []
 
-    if not next_bus_times:
-        msg_text = "No buses due for hours"
+        if not next_bus_times:
+            msg_text = "No buses due for hours"
+        else:
+            times_str = ", ".join(next_bus_times)
+            msg_text = f"Next 141 in: {times_str} mins"
+
+        await scroll_msg(msg_text)
+
+        print("next_bus_info() complete")
     else:
-        times_str = ", ".join(next_bus_times)
-        msg_text = f"Next 141 in: {times_str} mins"
-
-    await scroll_msg(msg_text)
-
-    print("next_bus_info() complete")
+        print("Not running TFL.next_buses(): wifi is not connected")
 
 async def piccadilly_line_status():
     print("piccadilly_line_status()")
 
-    # Bit of exception handling in case internet doesn't do what we expect
-    try:
-        line_status = await TFL.line_status("piccadilly")
-    except Exception as e:
-        print("Error getting line status:", e)
-        line_status = "unknown"
+    wlan = network.WLAN(network.STA_IF)
+    if wlan.isconnected():
+        # Bit of exception handling in case internet doesn't do what we expect
+        try:
+            line_status = await TFL.line_status("piccadilly")
+        except Exception as e:
+            print("Error getting line status:", e)
+            line_status = "unknown"
 
-    await scroll_msg(f"Piccadilly line: {line_status}")
+        if not line_status:
+            line_status = "good service"
 
-    print("piccadilly_line_status() complete")
+        await scroll_msg(f"Piccadilly line: {line_status}")
+
+        print("piccadilly_line_status() complete")
+    else:
+        print("Not running TFL.line_status(\"piccadilly\"): wifi is not connected")

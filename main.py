@@ -70,10 +70,11 @@ async def main():
             config.gu.update(config.picoboard)
 
 # Stop attract mode. Start the show
-def stop_attract_start_show():
+async def stop_attract_start_show():
     print("stop_attract_start_show()")
     
     # Cancel attract tasks from global scope (we don't need "global" because we don't writing to them)
+    global main_task, sync_ntp_task
     main_task.cancel()
     sync_ntp_task.cancel()
 
@@ -85,8 +86,11 @@ def stop_attract_start_show():
         except AttributeError:
             pass
     
-    # Start the show
-    loop.create_task(panel_liveshow.main())
+    # Start the show and wait for it to complete
+    await panel_liveshow.main()
+    
+    # Start the attract mode again
+    stop_show_start_attract()
 
 # Stop the show. Start attract mode.
 def stop_show_start_attract():
@@ -104,17 +108,15 @@ async def listen_for_commands():
     reader = uasyncio.StreamReader(sys.stdin)
 
     while True:
-        print("listen_for_commands() checks for a command")
-        command = await reader.readline()
+        command = await reader.readline() # Waits for a command
 
+        print(f"Command received: {command.decode().strip()}") 
         if command == b"show-start\n":
-            stop_attract_start_show()
+            await stop_attract_start_show()
         elif command == b"show-stop\n":
             stop_show_start_attract()
         else:
             print("Unknown command:", command.decode().strip())
-    
-        await uasyncio.sleep(0.5)
 
 if __name__ == "__main__":
     print("Start program")

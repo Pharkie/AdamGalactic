@@ -22,7 +22,7 @@ async def next_buses():
     
     # Make the API request
     url = "https://api-nile.tfl.gov.uk/StopPoint/490008766S/Arrivals"
-    response = urequests.get(url)
+    response = urequests.get(url=url, timeout=5)
     data = json.loads(response.text)
     times = []
     for bus in data:
@@ -32,12 +32,16 @@ async def next_buses():
 
     # Sort the times in ascending order
     times.sort()
-    print("Next buses in", times)
 
-    # Replace 0 with "due"
-    times_str = ["due" if time == 0 else str(time) for time in times]
+    if times is None:
+        print(f"No arrivals found for {stop_id}")
+        return []
+    else:
+        print(f"Next buses in: {times}")
+        # Replace 0 with "due"
+        times_str = ["due" if time == 0 else str(time) for time in times]
 
-    return times_str
+        return times_str
 
 # line_id can be e.g. piccadilly, bakerloo, victoria
 async def line_status(line_id):
@@ -49,7 +53,7 @@ async def line_status(line_id):
 
     # Make the API request
     url = f"https://api.tfl.gov.uk/Line/{line_id}/Status"
-    response = urequests.get(url)
+    response = urequests.get(url=url, timeout=5)
     data = json.loads(response.text)
 
     # Find the status of the specified line
