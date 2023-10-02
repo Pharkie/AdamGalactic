@@ -126,7 +126,7 @@ def sync_ntp():
 
         # Update the global BST status
         current_time_tuple = utime.localtime()
-        config.BST_active = check_BST_active(current_time_tuple);
+        config.BST_active = check_BST_active(current_time_tuple)
     except OSError:
         print("Failed to set time")
         pass

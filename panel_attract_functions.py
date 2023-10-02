@@ -69,7 +69,7 @@ async def rolling_clock():
     print("rolling_clock() complete")
 
 async def scroll_msg(msg_text):
-    print("scroll_msg()")
+    print(f"scroll_msg(): {msg_text}")
 
     length = config.picoboard.measure_text(msg_text, 1)
     steps = length + 53 # Scroll the msg_text with a bit of padding, min 53

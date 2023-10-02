@@ -23,17 +23,22 @@ import panel_liveshow
 async def main():
     print("main() called")
 
+    # The attract_tasks list is a list of tuples, where each tuple represents a task to be run.
+    # Each tuple has three elements:
+    # - The first element is the function to call.
+    # - The second element is an argument to pass to the function, or None if no argument is required.
+    # - The third element is the timeout value in seconds, or None if the function should be run with no timeout.
     attract_tasks = [
-        (panel_attract_functions.next_bus_info, None),
-        (panel_attract_functions.piccadilly_line_status, None),
-        (panel_attract_functions.rolling_clock, None),
-        (panel_attract_functions.scroll_msg, "Next stop: Penmaenmawr"),
-        (temp_etc_utils.show_temp, None),
-        (temp_etc_utils.show_humidity, None),
-        (temp_etc_utils.show_pressure, None),
-        (temp_etc_utils.show_gas, None),
+        (panel_attract_functions.next_bus_info, None, None),
+        (panel_attract_functions.piccadilly_line_status, None, None),
+        (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
+        (panel_attract_functions.scroll_msg, "Next stop: Penmaenmawr", None),
+        (temp_etc_utils.show_temp, None, config.CHANGE_INTERVAL),
+        (temp_etc_utils.show_humidity, None, config.CHANGE_INTERVAL),
+        (temp_etc_utils.show_pressure, None, config.CHANGE_INTERVAL),
+        (temp_etc_utils.show_gas, None, config.CHANGE_INTERVAL),
     ]
-    
+
     while True:
         # Shuffle the indices of the tasks using the Fisher-Yates shuffle algorithm
         # implemented using urandom.getrandbits(32) to generate random numbers.
@@ -41,26 +46,23 @@ async def main():
         for i in range(len(attract_tasks) - 1, 0, -1):
             j = urandom.getrandbits(32) % (i + 1)
             indices[i], indices[j] = indices[j], indices[i]
-        
+
         for i, index in enumerate(indices): # Run the tasks in the shuffled order
-            task_fn, arg = attract_tasks[index]
+            task_fn, arg, timeout_secs = attract_tasks[index]
             current_task_name = task_fn.__name__
-                        
-            # Allow certain tasks to complete in their own time i.e. to scroll the whole message once. Means they can execute beyond the timeout.
-            if current_task_name in ["piccadilly_line_status", "next_bus_info", "scroll_msg"]: 
+
+            if timeout_secs is None:
                 print(f"Running {current_task_name} with no timeout")
-                await (task_fn(arg) if arg is not None else task_fn)()
             else:
-                secs_target = config.CHANGE_INTERVAL + urandom.randint(0, round(config.CHANGE_INTERVAL * 0.2))
-                print(f"Running {current_task_name} for up to {secs_target} seconds")
-                
-                try:
-                    await uasyncio.wait_for(task_fn(arg) if arg is not None else task_fn(), timeout=secs_target)
-                except uasyncio.TimeoutError:
-                    pass
-                
-                print(f"Completed task {current_task_name}")
-            
+                print(f"Running {current_task_name} for up to {timeout_secs} seconds")
+
+            try:
+                await uasyncio.wait_for(task_fn(arg) if arg is not None else task_fn(), timeout=timeout_secs)
+            except uasyncio.TimeoutError:
+                pass
+
+            print(f"Completed task {current_task_name}")
+
             config.picoboard.set_pen(config.PEN_BLACK)
             config.picoboard.clear()
             config.gu.update(config.picoboard)
@@ -74,13 +76,7 @@ async def stop_attract_start_show():
     main_task.cancel()
     sync_ntp_task.cancel()
 
-    # Stop events in the tasks list
-    for attract_task in attract_tasks:
-        # Most of these tasks won't exist to call .cancel() on, so catch the exception and pass it
-        try:
-            attract_task[0].cancel()
-        except AttributeError:
-            pass
+    # Seems no need to cancel the attract tasks because they are cancelled when the main_task is cancelled
     
     # Start the show and wait for it to complete
     await panel_liveshow.main()
@@ -95,8 +91,8 @@ def stop_show_start_attract():
 
     # TODO: stop the show? Not needed if the show stops naturally. Only if need a command to stop the show out of sequence.
     # Add the attract tasks back to the event loop, using the vars from global scope
-    main_task = loop.create_task(main())
     sync_ntp_task = loop.create_task(datetime_utils.sync_ntp_periodically())
+    main_task = loop.create_task(main())
 
 async def listen_for_commands():
     # Uses the uasyncio.StreamReader class to read input from the standard input asynchronously without blocking.
