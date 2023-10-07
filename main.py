@@ -125,11 +125,11 @@ async def listen_for_commands():
 
 if __name__ == "__main__":
     print("Start program")
-    rolling_clock_display_utils.show_init_msg("PenClock", 5, 2)
+    utils.show_static_message("PenClock", config.PEN_BLUE, 5, 2, 0.2)
 
     utils.connect_wifi()
     # Update the online data cache at startup
-    cache_online_data.main()
+    uasyncio.run(cache_online_data.main())
 
     # Add the attract tasks to the event loop. Creates vars that can be accessed in functions to cancel or restart.
     sync_ntp_task = uasyncio.create_task(datetime_utils.sync_ntp_periodically())

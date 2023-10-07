@@ -65,21 +65,3 @@ async def rolling_clock():
 
         old_values = values.copy()
 
-async def scroll_msg(msg_text):
-    print(f"scroll_msg() called with msg_text: {msg_text}")
-    
-    length = config.picoboard.measure_text(msg_text, 1)
-    steps = length + 53 # Scroll the msg_text with a bit of padding, min 53
-
-    p = 53
-    for _ in range(steps):
-        config.picoboard.set_pen(config.PEN_BLACK)
-        config.picoboard.clear()
-        config.picoboard.set_pen(config.PEN_YELLOW)
-        config.picoboard.text(text=msg_text, x1=p, y1=2, wordwrap=-1, scale=1)
-        config.gu.update(config.picoboard)
-        p -= 1
-        await uasyncio.sleep(0.03)
-
-    print("scroll_msg() complete")
-

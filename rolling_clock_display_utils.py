@@ -41,20 +41,3 @@ def scroll_digit(params):
     config.picoboard.text(text=str(bottom_number), x1=x_pos, y1=y_pos + config.char_height - (loop_num + 1), wordwrap=-1, scale=1)
 
     config.picoboard.remove_clip()
-
-# Display a start up message
-def show_init_msg(init_msg, x_pos, y_pos):
-    print("show_init_msg", init_msg, x_pos, y_pos)
-    config.gu.set_brightness(0.2)
-    config.picoboard.set_pen(config.PEN_BLACK)
-    config.picoboard.clear()
-    
-    config.picoboard.set_pen(config.PEN_BLUE)
-    config.picoboard.text(text = init_msg, x1 = x_pos, y1 = y_pos, wordwrap = -1, scale = 1)
-    config.gu.update(config.picoboard)
-    config.gu.set_brightness(1.0)
-    utime.sleep(0.5) # Brief name display before we get into the clock
-
-    config.picoboard.set_pen(config.PEN_BLACK)
-    config.picoboard.clear()
-    config.gu.update(config.picoboard)

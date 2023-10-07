@@ -9,7 +9,7 @@ License: GNU General Public License (GPL)
 """
 import uasyncio
 import config
-from panel_attract_functions import scroll_msg
+from utils import scroll_msg
 
 async def scroll_next_bus_info():
     print("scroll_next_bus_info() called")
@@ -32,7 +32,7 @@ async def scroll_next_bus_info():
 
                 # Scroll the bus information
                 print(f"Next 141: {bus_info_str} mins")
-                await scroll_msg(f"Next buses: {bus_info_str} minutes")
+                await scroll_msg(f"Next 141: {bus_info_str} mins")
 
     except Exception as e:
         print("Error:", e)

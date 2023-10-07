@@ -10,7 +10,7 @@ License: GNU General Public License (GPL)
 import uasyncio
 import utime
 import config
-import panel_attract_functions
+import utils
 
 async def main():
-    await panel_attract_functions.scroll_msg("Show start")
+    await utils.scroll_msg("Show start")
