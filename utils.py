@@ -19,11 +19,41 @@ def clear_picoboard():
     config.picoboard.clear()
     config.gu.update(config.picoboard)
 
-def show_static_message(message, pen_colour, x, y, brightness=1.0):
+def show_static_message(message, pen_colour, brightness=1.0):
+    print(f"show_static_message() called with message: {message}, pen_colour: {pen_colour}, brightness: {brightness}")
+    
     current_brightness = config.gu.get_brightness()
-    config.gu.set_brightness(brightness)
-    config.picoboard.set_pen(pen_colour)
-    config.picoboard.text(text=message, x1=x, y1=y, wordwrap=-1, scale=1)
+    clear_picoboard()
+    config.picoboard.set_pen(config.PEN_GREY)
+    
+    # Calculate the X position to center the text horizontally
+    text_width = config.picoboard.measure_text(message, 1)
+    x_pos = (53 - text_width) // 2
+    
+    # Split the message into two lines if the text width is greater than 53
+    if text_width > 53:
+        # Find the index of the space closest to the center of the message
+        space_index = len(message) // 2
+        while message[space_index] != ' ':
+            space_index += 1
+        
+        # Split the message into two lines at the space index
+        line1 = message[:space_index]
+        line2 = message[space_index+1:]
+        
+        # Calculate the X position to center each line horizontally
+        text_width1 = config.picoboard.measure_text(line1, 1)
+        x_pos1 = (53 - text_width1) // 2
+        text_width2 = config.picoboard.measure_text(line2, 1)
+        x_pos2 = (53 - text_width2) // 2
+        
+        # Display each line of the message on a separate line
+        config.picoboard.text(text=line1, x1=x_pos1, y1=-1, wordwrap=-1, scale=1)
+        config.picoboard.text(text=line2, x1=x_pos2, y1=5, wordwrap=-1, scale=1)
+    else:
+        # Display the message on a single line
+        config.picoboard.text(text=message, x1=x_pos, y1=2, wordwrap=-1, scale=1)
+    
     config.gu.update(config.picoboard)
     config.gu.set_brightness(current_brightness)
 
@@ -73,7 +103,7 @@ def connect_wifi():
 
     clear_picoboard()
 
-    show_static_message("Hi, wifi?", config.PEN_BLUE, 5, 2, 0.2)
+    show_static_message("Hi, wifi?", config.PEN_BLUE, 0.2)
 
     # Wait for connect success or failure
     max_wait = 20

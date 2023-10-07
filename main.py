@@ -125,7 +125,7 @@ async def listen_for_commands():
 
 if __name__ == "__main__":
     print("Start program")
-    utils.show_static_message("PenClock", config.PEN_BLUE, 5, 2, 0.2)
+    utils.show_static_message("PenClock", config.PEN_BLUE, 0.2)
 
     utils.connect_wifi()
     # Update the online data cache at startup

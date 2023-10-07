@@ -13,6 +13,7 @@ import config
 import network
 import utils
 import urequests # type: ignore
+import temp_etc_utils
 
 # Class to represent the online data cache object
 class OnlineDataCache:
@@ -169,7 +170,11 @@ async def update_cache_periodically():
 
         print("Updating cache post-startup (non-blocking)")
         utils.clear_picoboard()
-        utils.show_static_message("Syncing..", config.PEN_BLUE, 5, 2, 0.2)
+        # utils.show_static_message("Syncing..", config.PEN_BLUE, 0.2)
+        
+        # Show the temperature while we update the cache in the background
+        temp_etc_utils.show_temp()
+
         await config.my_cache.update_all_cache()
         utils.clear_picoboard()
 
@@ -181,11 +186,14 @@ async def main():
     config.my_cache = OnlineDataCache()
 
     utils.clear_picoboard()
-    utils.show_static_message("Syncing..", config.PEN_BLUE, 5, 2, 0.2)
+    # utils.show_static_message("Syncing..", config.PEN_BLUE, 0.2)
+    temp_etc_utils.show_temp()
+    print("Updating cache at startup (blocking)")
     await config.my_cache.update_all_cache()
+
     utils.clear_picoboard()
 
-    # Update the cache and start the update coro
+    # Start the update coro
     uasyncio.create_task(update_cache_periodically())
 
 # If this script is run outside of a module for testing, start the update coro main(). 
@@ -195,7 +203,7 @@ async def run_main_async():
 
     await main()
 
-    print(f"Next buses gets as: {config.my_cache.get('next_buses')}")
+    print(f"\nNext buses gets as: {config.my_cache.get('next_buses')}")
     print(f"Line status gets as: {config.my_cache.get('piccadilly_line_status')}")
     print(f"Configurable message gets as: {config.my_cache.get('configurable_message')}")
 
