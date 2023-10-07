@@ -98,7 +98,7 @@ class OnlineDataCache:
             expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[0][1]
             self.set("next_buses", bus_info, expiry_time)
         except Exception as e:
-            raise Exception(f"Failed to get next bus information from API: {e}")
+            print(f"Failed to get next bus information from API: {e}")
         
         print(f"Success: updated next buses cache with {bus_info}")
 
@@ -126,7 +126,7 @@ class OnlineDataCache:
             print(f"Success: updated Piccadilly line status cache with {line_status}")
 
         except Exception as e:
-            raise Exception(f"Failed to get tube line status data from API: {e}")
+            print(f"Failed to get tube line status data from API: {e}")
 
     # Retrieve the configurable message
     async def update_configurable_message_cache(self):
@@ -149,7 +149,7 @@ class OnlineDataCache:
             print(f"Updated configurable message: {message_text}")
 
         except Exception as e:
-            raise Exception(f"Failed to get configurable message from Gist: {e}")
+            print(f"Failed to get configurable message from Gist: {e}")
 
     # Update each item in the cache data
     async def update_all_cache(self):
@@ -168,6 +168,7 @@ async def update_cache_periodically():
     while True:
         await uasyncio.sleep(config.CACHE_REFRESH_INTERVAL)
 
+        print("\n", "=" * 100)
         print("Updating cache post-startup (non-blocking)")
         utils.clear_picoboard()
         # utils.show_static_message("Syncing..", config.PEN_BLUE, 0.2)
@@ -176,6 +177,7 @@ async def update_cache_periodically():
         temp_etc_utils.show_temp()
 
         await config.my_cache.update_all_cache()
+        print("\n", "=" * 100)
         utils.clear_picoboard()
 
 # Define a main function to start the cache update coroutine
@@ -186,8 +188,8 @@ async def main():
     config.my_cache = OnlineDataCache()
 
     utils.clear_picoboard()
-    # utils.show_static_message("Syncing..", config.PEN_BLUE, 0.2)
-    temp_etc_utils.show_temp()
+    utils.show_static_message("Syncing..", config.PEN_BLUE, 0.2)
+    # temp_etc_utils.show_temp()
     print("Updating cache at startup (blocking)")
     await config.my_cache.update_all_cache()
 

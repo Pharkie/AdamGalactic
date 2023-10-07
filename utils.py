@@ -21,9 +21,10 @@ def clear_picoboard():
 
 def show_static_message(message, pen_colour, brightness=1.0):
     print(f"show_static_message() called with message: {message}, pen_colour: {pen_colour}, brightness: {brightness}")
-    
-    current_brightness = config.gu.get_brightness()
+
+    previous_brightness = config.gu.get_brightness()
     clear_picoboard()
+
     config.picoboard.set_pen(config.PEN_GREY)
     
     # Calculate the X position to center the text horizontally
@@ -54,8 +55,9 @@ def show_static_message(message, pen_colour, brightness=1.0):
         # Display the message on a single line
         config.picoboard.text(text=message, x1=x_pos, y1=2, wordwrap=-1, scale=1)
     
+    config.gu.set_brightness(brightness)
     config.gu.update(config.picoboard)
-    config.gu.set_brightness(current_brightness)
+    config.gu.set_brightness(previous_brightness)
 
 async def scroll_msg(msg_text):
     print(f"scroll_msg() called with msg_text: {msg_text}")
@@ -78,7 +80,7 @@ async def scroll_msg(msg_text):
 async def scroll_configured_message():
     # Retrieve the msg from the cache
     msg = config.my_cache.get("configurable_message")
-    print(f"scroll_configured_message() called to scroll {msg}")
+    print(f"scroll_configured_message()")
     
     # Get configurable message from cache, if available
     try:
@@ -86,8 +88,6 @@ async def scroll_configured_message():
         if msg is None:
             raise Exception("Error: msg is expired or missing")
 
-        # Scroll the msg
-        print(f"Scrolling msg: {msg}")
         await scroll_msg(msg)
 
     except Exception as e:
