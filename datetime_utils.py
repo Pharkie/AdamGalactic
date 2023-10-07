@@ -71,55 +71,15 @@ def get_time_values():
         seconds_tens, seconds_ones
     )
 
-def connect_wifi():
-    """Connect to Wi-Fi and return True if successful, False otherwise."""
-    wlan = network.WLAN(network.STA_IF)
-    wlan.active(True)
-    wlan.config(pm=0xa11140)  # Turn WiFi power saving off for some slow APs # type: ignore
-    wlan.connect(config.WIFI_SSID, config.WIFI_PASSWORD) # type: ignore
-
-    # Wait for connect success or failure
-    max_wait = 20
-    while max_wait > 0:
-        if wlan.status() < 0 or wlan.status() >= 3:
-            break
-        max_wait -= 1
-        print('Waiting for Wifi to connect')
-        # Doesn't use async await to block the clock from display updates until the sync is complete
-        utime.sleep(0.3) 
-
-    if max_wait > 0:
-        print("Connected")
-        return True
-    else:
-        print("Timed out waiting for Wifi")
-        return False
-
-def disconnect_wifi():
-    """Disconnect from Wi-Fi."""
-    
-    print('disconnect_wifi() called')
-    wlan = network.WLAN(network.STA_IF)
-    wlan.disconnect()
-    wlan.active(False)
-
 def sync_ntp():
     """Turn on wifi, sync RTC to NTP, turn wifi off, return BST_active True or False."""
-    
     print('sync_ntp() called')
-    config.gu.set_brightness(0.2)
-    config.picoboard.set_pen(config.PEN_BLACK)
-    config.picoboard.clear()
-    config.gu.update(config.picoboard)
-
-    config.picoboard.set_pen(config.PEN_BLUE)
-    config.picoboard.text(text = "Syncing..", x1 = 5, y1 = 2, wordwrap = -1, scale = 1)
-    config.gu.update(config.picoboard)
-    config.gu.set_brightness(1.0)
-
-    # Connect to Wi-Fi
-    if not connect_wifi():
-        return False
+    
+    # Check if WLAN is connected
+    wlan = network.WLAN(network.STA_IF)
+    if not wlan.isconnected():
+        print("Wifi not connected: not running ntptime.settime()")
+        return
 
     try:
         ntptime.settime() # No parameters available for DST offset

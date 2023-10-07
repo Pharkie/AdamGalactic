@@ -19,6 +19,7 @@ import temp_etc_utils
 import rolling_clock_display_utils
 import panel_attract_functions
 import panel_liveshow
+import utils
 
 async def main():
     print("main() called")
@@ -28,11 +29,13 @@ async def main():
     # - The first element is the function to call.
     # - The second element is an argument to pass to the function, or None if no argument is required.
     # - The third element is the timeout value in seconds, or None if the function should be run with no timeout.
+    
+    # Set the configurable message
     attract_tasks = [
         (panel_attract_functions.next_bus_info, None, None),
         (panel_attract_functions.piccadilly_line_status, None, None),
         (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
-        (panel_attract_functions.scroll_msg, configurable_message, None),
+        (panel_attract_functions.scroll_msg, panel_attract_functions.read_configurable_message(), None),
         (temp_etc_utils.show_temp, None, config.CHANGE_INTERVAL),
         (temp_etc_utils.show_humidity, None, config.CHANGE_INTERVAL),
         (temp_etc_utils.show_pressure, None, config.CHANGE_INTERVAL),
@@ -117,10 +120,7 @@ if __name__ == "__main__":
     # Add tasks for the coroutines to the event loop
     loop = uasyncio.get_event_loop()
 
-    # Create a global var for this message with a default message
-    configurable_message = config.DEFAULT_CONFIGURABLE_MESSAGE
-    # Replace the default with the online message if available
-    panel_attract_functions.read_configurable_message()
+    utils.connect_wifi()
 
     # Add the attract tasks to the event loop. Creates vars that can be accessed in functions to cancel or restart.
     sync_ntp_task = loop.create_task(datetime_utils.sync_ntp_periodically())

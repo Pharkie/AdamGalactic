@@ -18,27 +18,35 @@ import urequests
 
 # Update the configurable message
 def read_configurable_message():
-    global configurable_message
+    print("read_configurable_message() called")
+    # Default to the default message
+    configurable_message = config.DEFAULT_CONFIGURABLE_MESSAGE
 
-    # Check if WLAN is connected
-    wlan = network.WLAN(network.STA_IF)
-    if not wlan.isconnected():
-        print("Wifi not connected: not running requests.get(Github gist)")
-        return
-
+    # Update the configurable message from the Gist, if available
     try:
-        # Read the configurable message from the Gist
-        response = urequests.get(config.configurable_message_gist_URL)
-        response.raise_for_status()
+        # Check if WLAN is connected
+        wlan = network.WLAN(network.STA_IF)
+        if not wlan.isconnected():
+            raise Exception("wifi not connected")
 
+        # Read the configurable message from the Gist
+        response = urequests.get(config.configurable_message_gist_URL, timeout=5)
+        
+        if not response.status_code == 200:
+            raise Exception(f"expected status 200, got {response.status_code}")
+        
         if not configurable_message:
-            print("Received blank message from Gist: not updating configurable message")
-            return
-        else:
-            configurable_message = response.text.strip()
-            print("Updated configurable_message from Gist: %s" % configurable_message)
+            raise Exception("received blank message")
+        
+        configurable_message = response.text.strip()
+        print("Success: read online message from Gist")
     except Exception as e:
-        print("Failed to read configurable message from Gist: %s", e)
+        print(f"Failed to read configurable message from Gist: {e}. Returning default.")
+    finally:
+        response.close()
+
+    print(f"read_configurable_message returning: {configurable_message}")
+    return configurable_message
 
 async def rolling_clock():
     old_values = datetime_utils.get_time_values()
@@ -112,48 +120,68 @@ async def scroll_msg(msg_text):
 async def next_bus_info():
     print("next_bus_info() called")
 
-    wlan = network.WLAN(network.STA_IF)
-    if wlan.isconnected():
-        print("Wifi connected so running TFL.next_buses()")
-        # Exception handling in case internet doesn't do what we expect
-        try:
-            next_bus_times = await TFL.next_buses()
-        except Exception as e:
-            print("Error getting next bus times:", e)
-            next_bus_times = []
+    # Get next buses from TFL, if available
+    try:
+        # Check if WLAN is connected
+        wlan = network.WLAN(network.STA_IF)
+        if not wlan.isconnected():
+            raise Exception("wifi not connected")
 
+        next_bus_times = await TFL.next_buses_list()
+        
         if not next_bus_times:
             msg_text = "No buses due for hours"
         else:
             times_str = ", ".join(next_bus_times)
             msg_text = f"Next 141 in: {times_str} mins"
 
+        print("Success: got next buses. Scrolling to display.")
         await scroll_msg(msg_text)
+    except Exception as e:
+        print(f"Fail: didn't get next buses. {e}")
 
-        print("next_bus_info() complete")
-    else:
-        print("Not running TFL.next_buses(): wifi is not connected")
 
 async def piccadilly_line_status():
     print("piccadilly_line_status() called")
 
     wlan = network.WLAN(network.STA_IF)
 
+    # Get Piccadilly line status from TFL, if available
+    try:
+        # Check if WLAN is connected
+        wlan = network.WLAN(network.STA_IF)
+        if not wlan.isconnected():
+            raise Exception("wifi not connected")
+
+        line_status = await TFL.line_status()
+        
+        if not line_status:
+            line_status = "good service"
+
+        print("Success: got line status. Scrolling to display.")
+        await scroll_msg(f"Piccadilly line: {line_status}")
+    except Exception as e:
+        print(f"Fail: didn't get line status. {e}")
+
+async def piccadilly_line_status_OLLDDDDD():
+    print("piccadilly_line_status() called")
+
+    wlan = network.WLAN(network.STA_IF)
+
     if not wlan.isconnected():
-        print("Wifi not connected: not running TFL.line_status(\"piccadilly\")")
+        print("Wifi not connected: not running TFL.line_status()")
         return
 
-    print("Wifi connected so running TFL.line_status(\"piccadilly\")")
+    print("Wifi connected so running TFL.line_status())")
     # Exception handling in case internet doesn't do what we expect
     try:
-        line_status = await TFL.line_status("piccadilly")
+        line_status = await TFL.line_status()
+
+        if not line_status:
+            line_status = "good service"
+
+        await scroll_msg(f"Piccadilly line: {line_status}")
     except Exception as e:
         print("Error getting line status:", e)
-        line_status = "unknown"
-
-    if not line_status:
-        line_status = "good service"
-
-    await scroll_msg(f"Piccadilly line: {line_status}")
 
     print("piccadilly_line_status() complete")
