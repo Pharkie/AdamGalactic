@@ -30,8 +30,8 @@ async def run_attract_mode():
 
     # List of tasks to be run, each represented by a tuple with a function to call, an optional argument, and a timeout value.
     attract_tasks = [
-        # (TFL.scroll_next_bus_info, None, None),
-        # (TFL.scroll_piccadilly_line_status, None, None),
+        (TFL.scroll_next_bus_info, None, None),
+        (TFL.scroll_piccadilly_line_status, None, None),
         (utils.scroll_configured_message, None, None),
         # (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
         # (temp_etc_utils.show_temp, None, config.CHANGE_INTERVAL),
@@ -68,7 +68,7 @@ async def run_attract_mode():
             config.picoboard.clear()
             config.gu.update(config.picoboard)
 
-        await uasyncio.sleep(5) # Debugging
+        # await uasyncio.sleep(5) # Debugging
 
 # Stop attract mode. Start the show
 async def stop_attract_start_show():

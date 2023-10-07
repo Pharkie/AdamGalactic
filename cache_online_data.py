@@ -194,3 +194,7 @@ if __name__ == "__main__":
     utils.connect_wifi()
 
     main()
+
+    print(f"Configurable message gets as: {config.my_cache.get('configurable_message')}")
+    print(f"Next buses gets as: {config.my_cache.get('next_buses')}")
+    print(f"Line status gets as: {config.my_cache.get('piccadilly_line_status')}")

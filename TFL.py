@@ -31,7 +31,7 @@ async def scroll_next_bus_info():
                 bus_info_str = ", ".join(bus_info_str)
 
                 # Scroll the bus information
-                print(f"Next buses: {bus_info_str} minutes")
+                print(f"Next 141: {bus_info_str} mins")
                 await scroll_msg(f"Next buses: {bus_info_str} minutes")
 
     except Exception as e:
@@ -51,7 +51,7 @@ async def scroll_piccadilly_line_status():
         
         # Scroll the line status information
         print(f"Scrolling Piccadilly line status: {line_status}")
-        await scroll_msg(f"Piccadilly line status: {line_status}")
+        await scroll_msg(f"Piccadilly line: {line_status}")
 
     except Exception as e:
         print("Error:", e)

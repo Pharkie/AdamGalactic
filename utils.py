@@ -73,4 +73,4 @@ async def scroll_configured_message():
         await scroll_msg(msg)
 
     except Exception as e:
-        print("Error:", e)
+        print(f"Error: {e}")
