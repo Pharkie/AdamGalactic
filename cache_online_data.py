@@ -50,108 +50,102 @@ class OnlineDataCache:
         else:
             return getattr(self, cache_item)
     
-    def __get_JSON_data(api_url):
-        print(f"__get_JSON_data() called with {api_url}")
-        # try:
-        #     if not utils.is_wifi_connected():
-        #         raise Exception("Wi-Fi is not connected")
+    def __get_JSON_data(self, api_url):
+        # print(f"__get_JSON_data() called with {api_url}")
+        try:
+            if not utils.is_wifi_connected():
+                raise Exception("Wi-Fi is not connected")
 
-        #     # Make the API request to get the data
-        #     response = urequests.get(api_url, timeout=10)
-        #     if response.status_code != 200:
-        #         raise Exception(f"API request expected 200, got {response.status_code}")
+            # Make the API request to get the data
+            response = urequests.get(api_url, timeout=10)
+            if response.status_code != 200:
+                raise Exception(f"API request expected 200, got {response.status_code}")
 
-        #     if not response.content:
-        #         raise Exception("empty response from API")
+            if not response.content:
+                raise Exception("empty response from API")
 
-        #     try:
-        #         data = response.json()
-        #     except ValueError:
-        #         raise Exception("invalid JSON response from API")
+            try:
+                data = response.json()
+            except ValueError:
+                raise Exception("invalid JSON response from API")
 
-        #     response.close() # Close the Response object after use
+            response.close() # Close the Response object after use
 
-        #     return data
+            return data
 
-        # except urequests.exceptions.Timeout as e:
-        #     raise Exception(f"API request timed out: {e}")
+        except urequests.exceptions.Timeout as e:
+            raise Exception(f"API request timed out: {e}")
 
-        # except Exception as e:
-        #     raise Exception(f"Failed to get JSON data from API: {e}")
+        except Exception as e:
+            raise Exception(f"Failed to get JSON data from API: {e}")
 
     def update_next_buses_cache(self):
         print("update_next_buses_cache() called")
 
-        print(f"calling get JSON with {config.next_buses_URL}")
+        try:
+            # Get the next bus information from the TFL API
+            next_buses_data = self.__get_JSON_data(config.next_buses_URL)
 
-        # try:
-        #     print("HERE: Trying to get JSON data")
-        #     # Get the next bus information from the TFL API
-        #     # next_buses_data = self.__get_JSON_data(config.next_buses_URL)
-        #     # next_buses_data = self.__get_JSON_data("https://api.tfl.gov.uk/Line/141/Arrivals/490008766S")
+            # Extract the bus information from next_buses_data JSON
+            bus_info = []
+            for bus in next_buses_data:
+                if bus.get("lineName") == "141":
+                    time_to_station = bus["timeToStation"] // 60
+                    bus_info.append(time_to_station)
 
-        #     # # Extract the bus information from next_buses_data JSON
-        #     # bus_info = []
-        #     # for bus in next_buses_data:
-        #     #     if bus.get("lineName") == "141":
-        #     #         time_to_station = bus["timeToStation"] // 60
-        #     #         bus_info.append(time_to_station)
+            if bus_info is None:
+                raise Exception("bus_info is empty")
 
-        #     # # Sort the times in ascending order
-        #     # bus_info.sort()
+            # Sort the times in ascending order
+            bus_info.sort()
 
-        #     # # Set the cache with the bus information
-        #     # expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[0][1]
-        #     # self.set("next_buses", bus_info, expiry_time)
-
-        #     # print(f"Success: updated next buses cache with {bus_info}")
-
-        # except Exception as e:
-        #     raise Exception(f"Failed to get next bus information from API: {e}")
+            # Set the cache with the bus information
+            expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[0][1]
+            self.set("next_buses", bus_info, expiry_time)
+        except Exception as e:
+            raise Exception(f"Failed to get next bus information from API: {e}")
+        
+        print(f"Success: updated next buses cache with {bus_info}")
 
     def update_line_status_cache(self):
         print("update_line_status_cache() called")
 
-        # try:
-        #     # Get the line status data from the TFL API
-        #     line_status_data = self.__get_JSON_data(config.piccadilly_line_status_URL)
+        try:
+            # Get the line status data from the TFL API
+            line_status_data = self.__get_JSON_data(config.piccadilly_line_status_URL)
 
-        #     # Find the status of the specified line
-        #     line_status = None
-        #     for line in line_status_data:
-        #         if line["id"] == "piccadilly":
-        #             line_status = line["lineStatuses"][0]["statusSeverityDescription"]
-        #             break
+            # Find the status of the specified line
+            line_status = None
+            for line in line_status_data:
+                if line["id"] == "piccadilly":
+                    line_status = line["lineStatuses"][0]["statusSeverityDescription"]
+                    break
 
-        #     if line_status is None:
-        #         raise Exception("could not retrieve piccadilly line status")
+            if line_status is None:
+                raise Exception("could not retrieve piccadilly line status")
 
-        #     # Set the cache with the line status
-        #     expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[1][1]
-        #     self.set("piccadilly_line_status", line_status, expiry_time)
+            # Set the cache with the line status
+            expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[1][1]
+            self.set("piccadilly_line_status", line_status, expiry_time)
 
-        #     print(f"Success: updated Piccadilly line status cache with {line_status}")
+            print(f"Success: updated Piccadilly line status cache with {line_status}")
 
-        # except Exception as e:
-        #     raise Exception(f"Failed to get tube line status data from API: {e}")
+        except Exception as e:
+            raise Exception(f"Failed to get tube line status data from API: {e}")
 
     # Retrieve the configurable message
     def update_configurable_message_cache(self):
         print("update_configurable_message_cache() called")
 
-        self.__get_JSON_data(config.configurable_message_gist_URL)
-
         try:
-            if not utils.is_wifi_connected():
-                raise Exception("Wi-Fi is not connected")
-
             # Get the configurable message from the API
-            # message_info = self.__get_JSON_data(config.configurable_message_gist_URL)
+            message_info = self.__get_JSON_data(config.configurable_message_gist_URL)
 
             # Extract the message text from the JSON data
-            # message_text = message_info[0]["custom_message"]
+            message_text = message_info["custom_message"]
 
-            message_text = "HELLO WORLD"
+            if message_text is None:
+                raise Exception("configurable message is empty")
 
             # Set the cache with the message text
             expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[2][1]
@@ -183,17 +177,20 @@ async def update_cache():
 def main():
     print("cache_online_data.main() called")
     
+    # Populate the global cache instance with a new cache object
     config.my_cache = OnlineDataCache()
 
     config.my_cache.update_next_buses_cache()
     config.my_cache.update_line_status_cache()
     config.my_cache.update_configurable_message_cache()
-    print("Cache updated at startup (blocking)")
-    # Populate the global cache instance with a new cache object
+    print("Success: cache updated at startup (blocking)")
 
     # Update the cache and start the update coro
     uasyncio.create_task(update_cache())
 
-# If this script is run solo, start the update coro main(). Does not run if this script is imported: the update coro should be started by the importer
+# If this script is run solo, start the update coro main(). 
+# Does not run if this script is imported: the update coro should be started by the importer
 if __name__ == "__main__":
+    utils.connect_wifi()
+
     main()
