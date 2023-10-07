@@ -9,6 +9,7 @@ License: GNU General Public License (GPL)
 """
 # Micropython libs
 import urandom
+import TFL
 import uasyncio
 import machine
 import sys
@@ -20,26 +21,23 @@ import rolling_clock_display_utils
 import panel_attract_functions
 import panel_liveshow
 import utils
+import cache_online_data
 
-async def main():
-    print("main() called")
-
-    # The attract_tasks list is a list of tuples, where each tuple represents a task to be run.
-    # Each tuple has three elements:
-    # - The first element is the function to call.
-    # - The second element is an argument to pass to the function, or None if no argument is required.
-    # - The third element is the timeout value in seconds, or None if the function should be run with no timeout.
+async def run_attract_mode():
+    print("run_attract_mode() called")
     
-    # Set the configurable message
+    global my_cache
+
+    # List of tasks to be run, each represented by a tuple with a function to call, an optional argument, and a timeout value.
     attract_tasks = [
-        (panel_attract_functions.next_bus_info, None, None),
-        (panel_attract_functions.piccadilly_line_status, None, None),
-        (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
-        (panel_attract_functions.scroll_msg, panel_attract_functions.read_configurable_message(), None),
-        (temp_etc_utils.show_temp, None, config.CHANGE_INTERVAL),
-        (temp_etc_utils.show_humidity, None, config.CHANGE_INTERVAL),
-        (temp_etc_utils.show_pressure, None, config.CHANGE_INTERVAL),
-        (temp_etc_utils.show_gas, None, config.CHANGE_INTERVAL),
+        # (TFL.scroll_next_bus_info, None, None),
+        # (TFL.scroll_piccadilly_line_status, None, None),
+        (utils.scroll_configured_message, None, None),
+        # (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
+        # (temp_etc_utils.show_temp, None, config.CHANGE_INTERVAL),
+        # (temp_etc_utils.show_humidity, None, config.CHANGE_INTERVAL),
+        # (temp_etc_utils.show_pressure, None, config.CHANGE_INTERVAL),
+        # (temp_etc_utils.show_gas, None, config.CHANGE_INTERVAL),
     ]
 
     while True:
@@ -70,17 +68,18 @@ async def main():
             config.picoboard.clear()
             config.gu.update(config.picoboard)
 
+        await uasyncio.sleep(5) # Debugging
+
 # Stop attract mode. Start the show
 async def stop_attract_start_show():
     print("stop_attract_start_show()")
     
     # Cancel attract tasks from global scope (we don't need "global" because we don't writing to them)
-    global main_task, sync_ntp_task
-    main_task.cancel()
+    # (Seems no need to cancel the attract tasks because they are cancelled when the main_task is cancelled)
+    global attract_mode_task, sync_ntp_task
+    attract_mode_task.cancel()
     sync_ntp_task.cancel()
 
-    # Seems no need to cancel the attract tasks because they are cancelled when the main_task is cancelled
-    
     # Start the show and wait for it to complete
     await panel_liveshow.main()
     
@@ -90,12 +89,12 @@ async def stop_attract_start_show():
 # Stop the show. Start attract mode.
 def stop_show_start_attract():
     print("stop_show_start_attract()") # Also starts when the show stops naturally i.e. not via a received command
-    global main_task, sync_ntp_task # Let's not create new vars in this scope
+    global attract_mode_task, sync_ntp_task # Let's not create new vars in this scope
 
     # TODO: stop the show? Not needed if the show stops naturally. Only if need a command to stop the show out of sequence.
     # Add the attract tasks back to the event loop, using the vars from global scope
     sync_ntp_task = loop.create_task(datetime_utils.sync_ntp_periodically())
-    main_task = loop.create_task(main())
+    attract_mode_task = loop.create_task(run_attract_mode())
 
 async def listen_for_commands():
     # Uses the uasyncio.StreamReader class to read input from the standard input asynchronously without blocking.
@@ -103,7 +102,18 @@ async def listen_for_commands():
     reader = uasyncio.StreamReader(sys.stdin)
 
     while True:
-        command = await reader.readline() # Waits for a command
+        if config.gu.is_pressed(config.GalacticUnicorn.SWITCH_BRIGHTNESS_UP):
+            config.gu.adjust_brightness(+0.01)
+            config.gu.update(config.picoboard)
+            await uasyncio.sleep(0.01)
+
+        if config.gu.is_pressed(config.GalacticUnicorn.SWITCH_BRIGHTNESS_DOWN):
+            config.gu.adjust_brightness(-0.01)
+            config.gu.update(config.picoboard)
+            await uasyncio.sleep(0.01)
+
+        # Waits for a command and blocks the rest of this function, so need for sleep in this loop
+        command = await reader.readline() 
 
         print(f"Command received: {command.decode().strip()}") 
         if command == b"show-start\n":
@@ -117,21 +127,19 @@ if __name__ == "__main__":
     print("Start program")
     rolling_clock_display_utils.show_init_msg("PenClock", 5, 2)
 
-    # Add tasks for the coroutines to the event loop
-    loop = uasyncio.get_event_loop()
-
     utils.connect_wifi()
+    # Update the online data cache at startup
+    cache_online_data.main()
 
     # Add the attract tasks to the event loop. Creates vars that can be accessed in functions to cancel or restart.
-    sync_ntp_task = loop.create_task(datetime_utils.sync_ntp_periodically())
-    command_task = loop.create_task(listen_for_commands())
-    main_task = loop.create_task(main())
+    sync_ntp_task = uasyncio.create_task(datetime_utils.sync_ntp_periodically())
+    command_task = uasyncio.create_task(listen_for_commands())
+    attract_mode_task = uasyncio.create_task(run_attract_mode())
 
     try:
-        # Run all tasks forever
-        loop.run_forever()
+        uasyncio.get_event_loop().run_forever()
     except KeyboardInterrupt:
         pass
     finally:
         # Close the event loop
-        loop.close()
+        uasyncio.get_event_loop().close()

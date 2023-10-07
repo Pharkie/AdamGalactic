@@ -7,82 +7,51 @@ Description: Functions to interface with TFL API for transport info
 GitHub Repository: https://github.com/Pharkie/AdamGalactic/
 License: GNU General Public License (GPL)
 """
-import network
-import urequests
-import json
+import uasyncio
 import config
-# import uasyncio # Just for testing solo
-# import datetime_utils # Just for testing solo
+from panel_attract_functions import scroll_msg
 
-async def next_buses_list():
-    # Check if Wi-Fi is connected
-    wlan = network.WLAN(network.STA_IF)
-    if not wlan.isconnected():
-        raise Exception("wifi not connected")
+async def scroll_next_bus_info():
+    print("scroll_next_bus_info() called")
     
-    # Make the API request
-    response = urequests.get(url=config.next_buses_URL, timeout=5)
+    # Get next buses from cache, if available
+    try:
+        # Retrieve the next_buses data from the cache
+        next_buses_data = config.my_cache.get("next_buses")
 
-    if not response.status_code == 200:
-        raise Exception(f"expected status 200, got {response.status_code}")
-    
-    data = json.loads(response.text)
-    times = []
-    for bus in data:
-        if bus.get("lineName") == "141":
-            time_to_station = bus["timeToStation"] // 60
-            times.append(time_to_station)
+        # Check if the next_buses data is None (i.e. expired)
+        if next_buses_data is None:
+            raise Exception("Error: next_buses data is expired or missing")
+        else:
+            if not next_buses_data:
+                raise Exception(f"No arrivals found for given bus stop")
+            else:
+                # Replace 0 with "due"
+                bus_info_str = ["due" if time == 0 else str(time) for time in next_buses_data]
+                bus_info_str = ", ".join(bus_info_str)
 
-    # Sort the times in ascending order
-    times.sort()
+                # Scroll the bus information
+                print(f"Next buses: {bus_info_str} minutes")
+                await scroll_msg(f"Next buses: {bus_info_str} minutes")
 
-    response.close()
+    except Exception as e:
+        print("Error:", e)
 
-    if times is None:
-        raise Exception(f"No arrivals found for {stop_id}")
-    else:
-        # Replace 0 with "due"
-        times_str = ["due" if time == 0 else str(time) for time in times]
+async def scroll_piccadilly_line_status():
+    print("scroll_piccadilly_line_status() called")
 
-        print(f"next_buses_list() returning: {times_str}")
+    # Get line status from cache, if available
+    try:
+        # Retrieve the line status data from the cache
+        line_status = config.my_cache.get("piccadilly_line_status")
 
-        return times_str
+        # Check if the line status data is None (i.e. expired)
+        if line_status is None:
+            raise Exception("Error: line status data is expired or missing")
+        
+        # Scroll the line status information
+        print(f"Scrolling Piccadilly line status: {line_status}")
+        await scroll_msg(f"Piccadilly line status: {line_status}")
 
-# line_id can be e.g. piccadilly, bakerloo, victoria
-async def line_status():
-    # Check if Wi-Fi is connected
-    wlan = network.WLAN(network.STA_IF)
-    if not wlan.isconnected():
-        raise Exception("wifi not connected")
-
-    # Make the API request
-    response = urequests.get(config.piccadilly_line_status_URL, timeout=5)
-
-    if not response.status_code == 200:
-        raise Exception(f"expected status 200, got {response.status_code}")
-    
-    data = json.loads(response.text)
-    response.close()
-
-    # Find the status of the specified line
-    line_status = None
-    for line in data:
-        if line["id"] == "piccadilly":
-            line_status = line["lineStatuses"][0]["statusSeverityDescription"]
-            break
-
-    if line_status is None:
-        raise Exception("No piccadilly line status")
-
-    print(f"Returning piccadilly line status:", line_status)
-    return line_status
-
-# async def main(): # Test this solo
-#     # Connect to Wi-Fi
-#     datetime_utils.connect_wifi()
-
-#     # Get the next bus times
-#     times = await next_buses()
-#     print(times)
-
-# uasyncio.run(main())
+    except Exception as e:
+        print("Error:", e)

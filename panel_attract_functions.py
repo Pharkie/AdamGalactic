@@ -9,46 +9,12 @@ License: GNU General Public License (GPL)
 
 import uasyncio
 import utime
-import network
 import config
 import datetime_utils
 import rolling_clock_display_utils
-import TFL
-import urequests
-
-# Update the configurable message
-def read_configurable_message():
-    print("read_configurable_message() called")
-    # Default to the default message
-    configurable_message = config.DEFAULT_CONFIGURABLE_MESSAGE
-
-    # Update the configurable message from the Gist, if available
-    try:
-        # Check if WLAN is connected
-        wlan = network.WLAN(network.STA_IF)
-        if not wlan.isconnected():
-            raise Exception("wifi not connected")
-
-        # Read the configurable message from the Gist
-        response = urequests.get(config.configurable_message_gist_URL, timeout=5)
-        
-        if not response.status_code == 200:
-            raise Exception(f"expected status 200, got {response.status_code}")
-        
-        if not configurable_message:
-            raise Exception("received blank message")
-        
-        configurable_message = response.text.strip()
-        print("Success: read online message from Gist")
-    except Exception as e:
-        print(f"Failed to read configurable message from Gist: {e}. Returning default.")
-    finally:
-        response.close()
-
-    print(f"read_configurable_message returning: {configurable_message}")
-    return configurable_message
 
 async def rolling_clock():
+    print("rolling_clock() called")
     old_values = datetime_utils.get_time_values()
         
     while True:
@@ -100,8 +66,8 @@ async def rolling_clock():
         old_values = values.copy()
 
 async def scroll_msg(msg_text):
-    print(f"scroll_msg(): {msg_text}")
-
+    print(f"scroll_msg() called with msg_text: {msg_text}")
+    
     length = config.picoboard.measure_text(msg_text, 1)
     steps = length + 53 # Scroll the msg_text with a bit of padding, min 53
 
@@ -117,71 +83,3 @@ async def scroll_msg(msg_text):
 
     print("scroll_msg() complete")
 
-async def next_bus_info():
-    print("next_bus_info() called")
-
-    # Get next buses from TFL, if available
-    try:
-        # Check if WLAN is connected
-        wlan = network.WLAN(network.STA_IF)
-        if not wlan.isconnected():
-            raise Exception("wifi not connected")
-
-        next_bus_times = await TFL.next_buses_list()
-        
-        if not next_bus_times:
-            msg_text = "No buses due for hours"
-        else:
-            times_str = ", ".join(next_bus_times)
-            msg_text = f"Next 141 in: {times_str} mins"
-
-        print("Success: got next buses. Scrolling to display.")
-        await scroll_msg(msg_text)
-    except Exception as e:
-        print(f"Fail: didn't get next buses. {e}")
-
-
-async def piccadilly_line_status():
-    print("piccadilly_line_status() called")
-
-    wlan = network.WLAN(network.STA_IF)
-
-    # Get Piccadilly line status from TFL, if available
-    try:
-        # Check if WLAN is connected
-        wlan = network.WLAN(network.STA_IF)
-        if not wlan.isconnected():
-            raise Exception("wifi not connected")
-
-        line_status = await TFL.line_status()
-        
-        if not line_status:
-            line_status = "good service"
-
-        print("Success: got line status. Scrolling to display.")
-        await scroll_msg(f"Piccadilly line: {line_status}")
-    except Exception as e:
-        print(f"Fail: didn't get line status. {e}")
-
-async def piccadilly_line_status_OLLDDDDD():
-    print("piccadilly_line_status() called")
-
-    wlan = network.WLAN(network.STA_IF)
-
-    if not wlan.isconnected():
-        print("Wifi not connected: not running TFL.line_status()")
-        return
-
-    print("Wifi connected so running TFL.line_status())")
-    # Exception handling in case internet doesn't do what we expect
-    try:
-        line_status = await TFL.line_status()
-
-        if not line_status:
-            line_status = "good service"
-
-        await scroll_msg(f"Piccadilly line: {line_status}")
-    except Exception as e:
-        print("Error getting line status:", e)
-
-    print("piccadilly_line_status() complete")

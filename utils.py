@@ -11,9 +11,11 @@ License: GNU General Public License (GPL)
 import config
 import network
 import utime
+from panel_attract_functions import scroll_msg
 
 def connect_wifi():
-    """Connect to Wi-Fi and return True if successful, False otherwise."""
+    print("connect_wifi() called")
+
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.config(pm=0xa11140)  # Turn WiFi power saving off for some slow APs # type: ignore
@@ -41,15 +43,34 @@ def connect_wifi():
 
     if max_wait > 0:
         print("Wifi connected")
-        return True
     else:
         print("Wifi not connected: timed out")
-        return False
+    
+def is_wifi_connected():
+    is_it = network.WLAN(network.STA_IF).isconnected()
+    print(f"is_wifi_connected() called and returns {is_it}")
+    return is_it
 
 def disconnect_wifi():
-    """Disconnect from Wi-Fi."""
-
-    print('disconnect_wifi() called')
+    print("disconnect_wifi() called")
     wlan = network.WLAN(network.STA_IF)
     wlan.disconnect()
     wlan.active(False)
+
+async def scroll_configured_message():
+    # Retrieve the msg from the cache
+    msg = config.my_cache.get("configurable_message")
+    print(f"scroll_configured_message() called to scroll {msg}")
+    
+    # Get configurable message from cache, if available
+    try:
+        # Check if msg is None (i.e. expired)
+        if msg is None:
+            raise Exception("Error: msg is expired or missing")
+
+        # Scroll the msg
+        print(f"Scrolling msg: {msg}")
+        await scroll_msg(msg)
+
+    except Exception as e:
+        print("Error:", e)
