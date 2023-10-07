@@ -33,11 +33,11 @@ async def run_attract_mode():
         (TFL.scroll_next_bus_info, None, None),
         (TFL.scroll_piccadilly_line_status, None, None),
         (utils.scroll_configured_message, None, None),
-        # (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
-        # (temp_etc_utils.show_temp, None, config.CHANGE_INTERVAL),
-        # (temp_etc_utils.show_humidity, None, config.CHANGE_INTERVAL),
-        # (temp_etc_utils.show_pressure, None, config.CHANGE_INTERVAL),
-        # (temp_etc_utils.show_gas, None, config.CHANGE_INTERVAL),
+        (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
+        (temp_etc_utils.show_temp_coro, None, config.CHANGE_INTERVAL),
+        (temp_etc_utils.show_humidity_coro, None, config.CHANGE_INTERVAL),
+        (temp_etc_utils.show_pressure_coro, None, config.CHANGE_INTERVAL),
+        (temp_etc_utils.show_gas_coro, None, config.CHANGE_INTERVAL),
     ]
 
     while True:

@@ -8,6 +8,7 @@ License: GNU General Public License (GPL)
 """
 import config
 import utils
+import uasyncio
 from time import sleep # Just for testing
 
 def show_temp():
@@ -23,6 +24,11 @@ def show_temp():
 
     return msg_text
 
+async def show_temp_coro():
+    show_temp()
+
+    await uasyncio.sleep(20)
+
 def show_pressure():
     print("show_pressure()")
     
@@ -33,6 +39,11 @@ def show_pressure():
     utils.show_static_message(msg_text, config.PEN_GREY, 1.0)
 
     return msg_text
+
+async def show_pressure_coro():
+    show_pressure()
+
+    await uasyncio.sleep(20)
 
 def show_humidity():
     print("show_humidity()")
@@ -45,6 +56,11 @@ def show_humidity():
 
     return msg_text
 
+async def show_humidity_coro():
+    show_humidity()
+
+    await uasyncio.sleep(20)
+
 def show_gas():
     print("show_gas()")
     
@@ -55,6 +71,11 @@ def show_gas():
     utils.show_static_message(msg_text, config.PEN_GREY, 1.0)
 
     return msg_text
+
+async def show_gas_coro():
+    show_gas()
+
+    await uasyncio.sleep(20)
 
 if __name__ == "__main__":
     utils.clear_picoboard()
