@@ -32,7 +32,7 @@ async def main():
         (panel_attract_functions.next_bus_info, None, None),
         (panel_attract_functions.piccadilly_line_status, None, None),
         (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
-        (panel_attract_functions.scroll_msg, "Next stop: Penmaenmawr", None),
+        (panel_attract_functions.scroll_msg, configurable_message, None),
         (temp_etc_utils.show_temp, None, config.CHANGE_INTERVAL),
         (temp_etc_utils.show_humidity, None, config.CHANGE_INTERVAL),
         (temp_etc_utils.show_pressure, None, config.CHANGE_INTERVAL),
@@ -117,21 +117,10 @@ if __name__ == "__main__":
     # Add tasks for the coroutines to the event loop
     loop = uasyncio.get_event_loop()
 
-    # Tasks need to be defined here so they are accessible by both main() and stop_attract_start_show()
-    attract_tasks = [
-        (panel_attract_functions.scroll_msg, "Next stop: Penmaenmawr"),
-        (temp_etc_utils.show_temp, None),
-        (panel_attract_functions.next_bus_info, None),
-        (panel_attract_functions.piccadilly_line_status, None),
-        (temp_etc_utils.show_humidity, None),
-        (temp_etc_utils.show_pressure, None),
-        (temp_etc_utils.show_gas, None),
-        (panel_attract_functions.rolling_clock, None),
-    ]
-
-    # liveshow_tasks = [
-    #     (panel_liveshow.main, None),
-    # ]
+    # Create a global var for this message
+    configurable_message = ""
+    # Set the message
+    panel_attract_functions.update_configurable_message("Next stop: Penmaenmawr")
 
     # Add the attract tasks to the event loop. Creates vars that can be accessed in functions to cancel or restart.
     sync_ntp_task = loop.create_task(datetime_utils.sync_ntp_periodically())

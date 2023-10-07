@@ -85,7 +85,8 @@ def connect_wifi():
             break
         max_wait -= 1
         print('Waiting for Wifi to connect')
-        utime.sleep(0.3) # Doesn't use async await to block the clock from display updates until the sync is complete
+        # Doesn't use async await to block the clock from display updates until the sync is complete
+        utime.sleep(0.3) 
 
     if max_wait > 0:
         print("Connected")
@@ -144,7 +145,7 @@ async def sync_ntp_periodically():
         sync_ntp()
         current_time = utime.localtime()
          
-        # Calculate the number of seconds until the next hour, add a random offset
+        # Calculate seconds until the top of the next hour, then add a random offset
         next_sync_secs = 3600 - current_time[5] - (60 * current_time[4]) + urandom.randint(0, 59)
         
         print(f"sync_ntp_periodically() complete. Next sync in (secs): {next_sync_secs} secs")

@@ -15,6 +15,11 @@ import datetime_utils
 import rolling_clock_display_utils
 import TFL
 
+# Update the configurable message
+def update_configurable_message(new_message):
+    global configurable_message
+    configurable_message = new_message
+
 async def rolling_clock():
     old_values = datetime_utils.get_time_values()
         
