@@ -117,10 +117,10 @@ if __name__ == "__main__":
     # Add tasks for the coroutines to the event loop
     loop = uasyncio.get_event_loop()
 
-    # Create a global var for this message
-    configurable_message = ""
-    # Set the message
-    panel_attract_functions.update_configurable_message("Next stop: Penmaenmawr")
+    # Create a global var for this message with a default message
+    configurable_message = config.DEFAULT_CONFIGURABLE_MESSAGE
+    # Replace the default with the online message if available
+    panel_attract_functions.read_configurable_message()
 
     # Add the attract tasks to the event loop. Creates vars that can be accessed in functions to cancel or restart.
     sync_ntp_task = loop.create_task(datetime_utils.sync_ntp_periodically())

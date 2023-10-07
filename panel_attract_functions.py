@@ -14,11 +14,31 @@ import config
 import datetime_utils
 import rolling_clock_display_utils
 import TFL
+import urequests
 
 # Update the configurable message
-def update_configurable_message(new_message):
+def read_configurable_message():
     global configurable_message
-    configurable_message = new_message
+
+    # Check if WLAN is connected
+    wlan = network.WLAN(network.STA_IF)
+    if not wlan.isconnected():
+        print("Wifi not connected: not running requests.get(Github gist)")
+        return
+
+    try:
+        # Read the configurable message from the Gist
+        response = urequests.get(config.configurable_message_gist_URL)
+        response.raise_for_status()
+
+        if not configurable_message:
+            print("Received blank message from Gist: not updating configurable message")
+            return
+        else:
+            configurable_message = response.text.strip()
+            print("Updated configurable_message from Gist: %s" % configurable_message)
+    except Exception as e:
+        print("Failed to read configurable message from Gist: %s", e)
 
 async def rolling_clock():
     old_values = datetime_utils.get_time_values()
@@ -71,8 +91,6 @@ async def rolling_clock():
 
         old_values = values.copy()
 
-    print("rolling_clock() complete")
-
 async def scroll_msg(msg_text):
     print(f"scroll_msg(): {msg_text}")
 
@@ -120,20 +138,22 @@ async def piccadilly_line_status():
     print("piccadilly_line_status() called")
 
     wlan = network.WLAN(network.STA_IF)
-    if wlan.isconnected():
-        print("Wifi connected so running TFL.line_status(\"piccadilly\"")
-        # Exception handling in case internet doesn't do what we expect
-        try:
-            line_status = await TFL.line_status("piccadilly")
-        except Exception as e:
-            print("Error getting line status:", e)
-            line_status = "unknown"
 
-        if not line_status:
-            line_status = "good service"
+    if not wlan.isconnected():
+        print("Wifi not connected: not running TFL.line_status(\"piccadilly\")")
+        return
 
-        await scroll_msg(f"Piccadilly line: {line_status}")
+    print("Wifi connected so running TFL.line_status(\"piccadilly\")")
+    # Exception handling in case internet doesn't do what we expect
+    try:
+        line_status = await TFL.line_status("piccadilly")
+    except Exception as e:
+        print("Error getting line status:", e)
+        line_status = "unknown"
 
-        print("piccadilly_line_status() complete")
-    else:
-        print("Not running TFL.line_status(\"piccadilly\"): wifi is not connected")
+    if not line_status:
+        line_status = "good service"
+
+    await scroll_msg(f"Piccadilly line: {line_status}")
+
+    print("piccadilly_line_status() complete")
