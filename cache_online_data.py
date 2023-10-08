@@ -7,10 +7,9 @@ Description: A cache object that stores online data, updates it periodically and
 GitHub Repository: https://github.com/Pharkie/AdamGalactic/
 License: GNU General Public License (GPL)
 """
-import utime
+import utime # type: ignore
 import uasyncio
 import config
-import network
 import utils
 import urequests # type: ignore
 import temp_etc_utils

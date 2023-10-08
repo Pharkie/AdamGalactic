@@ -8,10 +8,9 @@ GitHub Repository: https://github.com/Pharkie/AdamGalactic/ClockRolling.py
 License: GNU General Public License (GPL)
 """
 # Micropython libs
-import urandom
+import urandom # type: ignore
 import TFL
 import uasyncio
-import machine
 import sys
 # My project
 import config
