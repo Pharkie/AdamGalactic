@@ -14,7 +14,7 @@ import datetime_utils
 import rolling_clock_display_utils
 
 async def rolling_clock():
-    print("rolling_clock() called")
+    # print("rolling_clock() called")
     old_values = datetime_utils.get_time_values()
         
     while True:

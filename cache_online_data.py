@@ -37,7 +37,7 @@ class OnlineDataCache:
 
     # Check if a cache item is expired
     def is_expired(self, cache_item):
-        return self.cache_expiry[cache_item] is None or self.cache_expiry[cache_item] < utime.time()
+        return self.cache_expiry[cache_item] is not None and self.cache_expiry[cache_item] < utime.time()
 
     # Set the cache item with new data and expiry time
     def set(self, cache_item, data, expiry_time):
@@ -63,19 +63,13 @@ class OnlineDataCache:
             except ValueError:
                 raise Exception("invalid JSON response from API")
 
-            # if responseJSON.status_code != 200:
-            #     raise Exception(f"API request expected 200, got {responseJSON.status_code}")
-
-            # if not responseJSON.content:
-            #     raise Exception("empty response from API")
-
             return responseJSON
 
         except Exception as e:
             raise Exception(f"Failed to get JSON data from API: {e}")
 
     async def update_next_buses_cache(self):
-        print("update_next_buses_cache() called")
+        # print("update_next_buses_cache() called")
 
         try:
             # Get the next bus information from the TFL API
@@ -100,10 +94,10 @@ class OnlineDataCache:
         except Exception as e:
             print(f"Failed to get next bus information from API: {e}")
         
-        print(f"Success: updated next buses cache with {bus_info}")
+        print(f"Success. Updated next buses cache with: {bus_info}")
 
     async def update_line_status_cache(self):
-        print("update_line_status_cache() called")
+        # print("update_line_status_cache() called")
 
         try:
             # Get the line status data from the TFL API
@@ -123,14 +117,14 @@ class OnlineDataCache:
             expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[1][1]
             self.set("piccadilly_line_status", line_status, expiry_time)
 
-            print(f"Success: updated Piccadilly line status cache with {line_status}")
+            print(f"Success. Updated Piccadilly line status cache with: {line_status}")
 
         except Exception as e:
             print(f"Failed to get tube line status data from API: {e}")
 
     # Retrieve the configurable message
     async def update_configurable_message_cache(self):
-        print("update_configurable_message_cache() called")
+        # print("update_configurable_message_cache() called")
 
         try:
             # Get the configurable message from the API
@@ -146,7 +140,7 @@ class OnlineDataCache:
             expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[2][1]
             self.set("configurable_message", message_text, expiry_time)
 
-            print(f"Updated configurable message: {message_text}")
+            print(f"Success. Updated configurable message with: {message_text}")
 
         except Exception as e:
             print(f"Failed to get configurable message from Gist: {e}")
@@ -164,25 +158,25 @@ class OnlineDataCache:
         print(f"Success: all cache updated")
 
 # Function to update the cache periodically
-async def update_cache_periodically():
-    while True:
-        await uasyncio.sleep(config.CACHE_REFRESH_INTERVAL)
+# async def update_cache_periodically():
+#     while True:
+#         await uasyncio.sleep(config.CACHE_REFRESH_INTERVAL)
 
-        print("\n", "=" * 100)
-        print("Updating cache post-startup (non-blocking)")
-        utils.clear_picoboard()
-        # utils.show_static_message("Syncing..", config.PEN_BLUE, 0.2)
+#         print("\n", "=" * 100)
+#         print("Updating cache post-startup (non-blocking)")
+#         utils.clear_picoboard()
+#         # utils.show_static_message("Syncing..", config.PEN_BLUE, 0.2)
         
-        # Show the temperature while we update the cache in the background
-        temp_etc_utils.show_temp()
+#         # Show the temperature while we update the cache in the background
+#         temp_etc_utils.show_temp()
 
-        await config.my_cache.update_all_cache()
-        print("\n", "=" * 100)
-        utils.clear_picoboard()
+#         await config.my_cache.update_all_cache()
+#         print("\n", "=" * 100)
+#         utils.clear_picoboard()
 
 # Define a main function to start the cache update coroutine
 async def main():
-    print("cache_online_data.main() called")
+    # print("cache_online_data.main() called")
     
     # Populate the global cache instance with a new cache object
     config.my_cache = OnlineDataCache()
@@ -195,8 +189,8 @@ async def main():
 
     utils.clear_picoboard()
 
-    # Start the update coro
-    uasyncio.create_task(update_cache_periodically())
+    # Start the update coro (moved to run in bg of static messages)
+    # uasyncio.create_task(update_cache_periodically())
 
 # If this script is run outside of a module for testing, start the update coro main(). 
 # Does not run if this script is imported: main() should be run by the importer i.e. uasyncio.run(cache_online_data.main())

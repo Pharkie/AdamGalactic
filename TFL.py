@@ -12,7 +12,7 @@ import config
 from utils import scroll_msg
 
 async def scroll_next_bus_info():
-    print("scroll_next_bus_info() called")
+    # print("scroll_next_bus_info() called")
     
     # Get next buses from cache, if available
     try:
@@ -38,7 +38,7 @@ async def scroll_next_bus_info():
         print("Error:", e)
 
 async def scroll_piccadilly_line_status():
-    print("scroll_piccadilly_line_status() called")
+    # print("scroll_piccadilly_line_status() called")
 
     # Get line status from cache, if available
     try:

@@ -20,7 +20,7 @@ def clear_picoboard():
     config.gu.update(config.picoboard)
 
 def show_static_message(message, pen_colour, brightness=1.0):
-    print(f"show_static_message() called with message: {message}, pen_colour: {pen_colour}, brightness: {brightness}")
+    # print(f"show_static_message() called with message: {message}, pen_colour: {pen_colour}, brightness: {brightness}")
 
     previous_brightness = config.gu.get_brightness()
     clear_picoboard()
@@ -60,7 +60,7 @@ def show_static_message(message, pen_colour, brightness=1.0):
     config.gu.set_brightness(previous_brightness)
 
 async def scroll_msg(msg_text):
-    print(f"scroll_msg() called with msg_text: {msg_text}")
+    # print(f"scroll_msg() called with msg_text: {msg_text}")
 
     length = config.picoboard.measure_text(msg_text, 1)
     steps = length + 53 # Scroll the msg_text with a bit of padding, min 53
@@ -94,7 +94,7 @@ async def scroll_configured_message():
         print(f"Error: {e}")
 
 def connect_wifi():
-    print("connect_wifi() called")
+    # print("connect_wifi() called")
 
     wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
@@ -124,11 +124,11 @@ def connect_wifi():
     
 def is_wifi_connected():
     is_it = network.WLAN(network.STA_IF).isconnected()
-    print(f"is_wifi_connected() called and returns {is_it}")
+    # print(f"is_wifi_connected() called and returns {is_it}")
     return is_it
 
 def disconnect_wifi():
-    print("disconnect_wifi() called")
+    # print("disconnect_wifi() called")
     wlan = network.WLAN(network.STA_IF)
     wlan.disconnect()
     wlan.active(False)

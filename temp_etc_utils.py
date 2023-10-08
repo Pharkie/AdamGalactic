@@ -12,7 +12,7 @@ import uasyncio
 from time import sleep # Just for testing
 
 def show_temp():
-    print("show_temp()")
+    # print("show_temp()")
     
     temperature_reading, _, _, _, status_reading, _, _ = config.bme.read()
     
@@ -30,7 +30,7 @@ async def show_temp_coro():
     await uasyncio.sleep(20)
 
 def show_pressure():
-    print("show_pressure()")
+    # print("show_pressure()")
     
     _, pressure_reading, _, _, _, _, _ = config.bme.read()
     
@@ -46,7 +46,7 @@ async def show_pressure_coro():
     await uasyncio.sleep(20)
 
 def show_humidity():
-    print("show_humidity()")
+    # print("show_humidity()")
     
     _, _, humidity_reading, _, _, _, _ = config.bme.read()
     
@@ -62,7 +62,7 @@ async def show_humidity_coro():
     await uasyncio.sleep(20)
 
 def show_gas():
-    print("show_gas()")
+    # print("show_gas()")
     
     _, _, _, gas_reading, _, _, _ = config.bme.read()
     

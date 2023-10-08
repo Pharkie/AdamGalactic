@@ -23,20 +23,33 @@ import panel_liveshow
 import utils
 import cache_online_data
 
+async def show_temp_and_update_next_buses_cache():
+    await uasyncio.gather(temp_etc_utils.show_temp_coro(), config.my_cache.update_next_buses_cache())
+
+async def show_humidity_and_update_line_status_cache():
+    await uasyncio.gather(temp_etc_utils.show_humidity_coro(), config.my_cache.update_line_status_cache())
+
+async def show_pressure_and_update_configurable_message_cache():
+    await uasyncio.gather(temp_etc_utils.show_pressure_coro(), config.my_cache.update_configurable_message_cache())
+
 async def run_attract_mode():
-    print("run_attract_mode() called")
+    # print("run_attract_mode() called")
     
     global my_cache
 
     # List of tasks to be run, each represented by a tuple with a function to call, an optional argument, and a timeout value.
+    # Updates different parts of the cache in the background while displaying some of the static messages.
     attract_tasks = [
         (TFL.scroll_next_bus_info, None, None),
         (TFL.scroll_piccadilly_line_status, None, None),
         (utils.scroll_configured_message, None, None),
         (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
-        (temp_etc_utils.show_temp_coro, None, config.CHANGE_INTERVAL),
-        (temp_etc_utils.show_humidity_coro, None, config.CHANGE_INTERVAL),
-        (temp_etc_utils.show_pressure_coro, None, config.CHANGE_INTERVAL),
+        (show_temp_and_update_next_buses_cache, None, config.CHANGE_INTERVAL),
+        (show_humidity_and_update_line_status_cache, None, config.CHANGE_INTERVAL),
+        (show_pressure_and_update_configurable_message_cache, None, config.CHANGE_INTERVAL),
+        # (temp_etc_utils.show_temp_coro, None, config.CHANGE_INTERVAL),
+        # (temp_etc_utils.show_humidity_coro, None, config.CHANGE_INTERVAL),
+        # (temp_etc_utils.show_pressure_coro, None, config.CHANGE_INTERVAL),
         (temp_etc_utils.show_gas_coro, None, config.CHANGE_INTERVAL),
     ]
 
@@ -52,17 +65,17 @@ async def run_attract_mode():
             task_fn, arg, timeout_secs = attract_tasks[index]
             current_task_name = task_fn.__name__
 
-            if timeout_secs is None:
-                print(f"Running {current_task_name} with no timeout")
-            else:
-                print(f"Running {current_task_name} for up to {timeout_secs} seconds")
+            # if timeout_secs is None:
+            #     print(f"Running {current_task_name} with no timeout")
+            # else:
+            #     print(f"Running {current_task_name} for up to {timeout_secs} seconds")
 
             try:
                 await uasyncio.wait_for(task_fn(arg) if arg is not None else task_fn(), timeout=timeout_secs)
             except uasyncio.TimeoutError:
                 pass
 
-            print(f"Completed task {current_task_name}")
+            # print(f"Completed task {current_task_name}")
 
             config.picoboard.set_pen(config.PEN_BLACK)
             config.picoboard.clear()
@@ -88,7 +101,7 @@ async def stop_attract_start_show():
 
 # Stop the show. Start attract mode.
 def stop_show_start_attract():
-    print("stop_show_start_attract()") # Also starts when the show stops naturally i.e. not via a received command
+    # print("stop_show_start_attract()") # Also starts when the show stops naturally i.e. not via a received command
     global attract_mode_task, sync_ntp_task # Let's not create new vars in this scope
 
     # TODO: stop the show? Not needed if the show stops naturally. Only if need a command to stop the show out of sequence.
@@ -98,7 +111,7 @@ def stop_show_start_attract():
 
 async def listen_for_commands():
     # Uses the uasyncio.StreamReader class to read input from the standard input asynchronously without blocking.
-    print("listen_for_commands() started")
+    # print("listen_for_commands() started")
     reader = uasyncio.StreamReader(sys.stdin)
 
     while True:

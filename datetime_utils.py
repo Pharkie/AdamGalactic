@@ -13,6 +13,7 @@ import ntptime
 import uasyncio
 import urandom
 import config
+import utils
 
 def format_date(dt):
     """Format the date as 'DD MMM YYYY'."""
@@ -73,23 +74,20 @@ def get_time_values():
 
 def sync_ntp():
     """Turn on wifi, sync RTC to NTP, turn wifi off, return BST_active True or False."""
-    print('sync_ntp() called')
-    
-    # Check if WLAN is connected
-    wlan = network.WLAN(network.STA_IF)
-    if not wlan.isconnected():
-        print("Wifi not connected: not running ntptime.settime()")
-        return
-
+    # print('sync_ntp() called')
+      
     try:
+        if not utils.is_wifi_connected():
+                    raise Exception("Wi-Fi is not connected")
+        
         ntptime.settime() # No parameters available for DST offset
-        print("Time set from NTP")
+        # print("Time set from NTP")
 
         # Update the global BST status
         current_time_tuple = utime.localtime()
         config.BST_active = check_BST_active(current_time_tuple)
-    except OSError:
-        print("Failed to set time")
+    except Exception as e:
+        print(f"Failed to set time: {e}")
         pass
 
     # Disconnect from Wi-Fi
@@ -101,7 +99,7 @@ def sync_ntp():
     
 async def sync_ntp_periodically():
     while True:
-        print("sync_ntp_periodically() called")
+        # print("sync_ntp_periodically() called")
         sync_ntp()
         current_time = utime.localtime()
          
