@@ -2,7 +2,7 @@
 Author: Adam Knowles
 Version: 0.1
 Name: cache_online_data.py
-Description: A cache object that stores online data, updates it periodically and provides methods to retrieve it
+Description: A cache object that stores online data, and provides methods to set cache items and retrieve them
 
 GitHub Repository: https://github.com/Pharkie/AdamGalactic/
 License: GNU General Public License (GPL)
