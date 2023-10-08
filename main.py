@@ -47,9 +47,6 @@ async def run_attract_mode():
         (show_temp_and_update_next_buses_cache, None, config.CHANGE_INTERVAL),
         (show_humidity_and_update_line_status_cache, None, config.CHANGE_INTERVAL),
         (show_pressure_and_update_configurable_message_cache, None, config.CHANGE_INTERVAL),
-        # (temp_etc_utils.show_temp_coro, None, config.CHANGE_INTERVAL),
-        # (temp_etc_utils.show_humidity_coro, None, config.CHANGE_INTERVAL),
-        # (temp_etc_utils.show_pressure_coro, None, config.CHANGE_INTERVAL),
         (temp_etc_utils.show_gas_coro, None, config.CHANGE_INTERVAL),
     ]
 
