@@ -15,7 +15,11 @@ Adam's Galactic Unicorn LED display. A hobby project the cycles between various 
 
 1. Clone or fork from Github. 
 2. Upload files to your Galactic Unicorn. Suggest use "Upload Project" from [MicroPico Visual Studio Code Extension](https://marketplace.visualstudio.com/items?itemName=paulober.pico-w-go).
-3. Update Wifi SSID and password in Secrets.py
+3. Create a text file "wifi_creds.py" in the root dir/ with the following contents:
+```
+WIFI_SSID = "<YOUR WIFI SSID>"
+WIFI_PASSWORD = "<YOUR WIFI PASSWORD>"
+```
 4. Set config options in config.py
 5. Run main.py.
 6. Profit.
