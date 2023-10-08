@@ -18,19 +18,19 @@ import temp_etc_utils
 # Class to represent the online data cache object
 class OnlineDataCache:
     def __init__(self):
-        self.configurable_message = None
-        self.configurable_message_last_updated = None
+        self.custom_message = None
+        self.custom_message_last_updated = None
         self.piccadilly_line_status = None
         self.piccadilly_line_status_last_updated = None
         self.next_buses = None
         self.next_buses_last_updated = None
         self.cache_expiry = {
-            "configurable_message": None,
+            "custom_message": None,
             "piccadilly_line_status": None,
             "next_buses": None
         }
         self.cache_expiry_times = {
-            "configurable_message": config.CACHE_EXPIRY_TIMES[0],
+            "custom_message": config.CACHE_EXPIRY_TIMES[0],
             "piccadilly_line_status": config.CACHE_EXPIRY_TIMES[1],
             "next_buses": config.CACHE_EXPIRY_TIMES[2]
         }
@@ -91,10 +91,9 @@ class OnlineDataCache:
             # Set the cache with the bus information
             expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[0][1]
             self.set("next_buses", bus_info, expiry_time)
+            print(f"Success. Updated next buses cache with: {bus_info}")
         except Exception as e:
             print(f"Failed to get next bus information from API: {e}")
-        
-        print(f"Success. Updated next buses cache with: {bus_info}")
 
     async def update_line_status_cache(self):
         # print("update_line_status_cache() called")
@@ -116,34 +115,32 @@ class OnlineDataCache:
             # Set the cache with the line status
             expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[1][1]
             self.set("piccadilly_line_status", line_status, expiry_time)
-
             print(f"Success. Updated Piccadilly line status cache with: {line_status}")
 
         except Exception as e:
             print(f"Failed to get tube line status data from API: {e}")
 
-    # Retrieve the configurable message
-    async def update_configurable_message_cache(self):
-        # print("update_configurable_message_cache() called")
+    # Retrieve the custom message
+    async def update_custom_message_cache(self):
+        # print("update_custom_message_cache() called")
 
         try:
-            # Get the configurable message from the API
-            message_info = await self.__get_JSON_data(config.configurable_message_gist_URL)
+            # Get the custom message from the API
+            message_info = await self.__get_JSON_data(config.custom_message_gist_URL)
 
             # Extract the message text from the JSON data
             message_text = message_info["custom_message"]
 
             if message_text is None:
-                raise Exception("configurable message is empty")
+                raise Exception("custom message is empty")
 
             # Set the cache with the message text
             expiry_time = utime.time() + config.CACHE_EXPIRY_TIMES[2][1]
-            self.set("configurable_message", message_text, expiry_time)
-
-            print(f"Success. Updated configurable message with: {message_text}")
+            self.set("custom_message", message_text, expiry_time)
+            print(f"Success. Updated custom message with: {message_text}")
 
         except Exception as e:
-            print(f"Failed to get configurable message from Gist: {e}")
+            print(f"Failed to get custom message from Gist: {e}")
 
     # Update each item in the cache data
     async def update_all_cache(self):
@@ -152,7 +149,7 @@ class OnlineDataCache:
         await uasyncio.gather(
             self.update_next_buses_cache(),
             self.update_line_status_cache(),
-            self.update_configurable_message_cache()
+            self.update_custom_message_cache()
         )
 
         print(f"Success: all cache updated")
@@ -174,7 +171,7 @@ class OnlineDataCache:
 #         print("\n", "=" * 100)
 #         utils.clear_picoboard()
 
-# Define a main function to start the cache update coroutine
+# Initialise
 async def main():
     # print("cache_online_data.main() called")
     
@@ -201,7 +198,7 @@ async def run_main_async():
 
     print(f"\nNext buses gets as: {config.my_cache.get('next_buses')}")
     print(f"Line status gets as: {config.my_cache.get('piccadilly_line_status')}")
-    print(f"Configurable message gets as: {config.my_cache.get('configurable_message')}")
+    print(f"Custom message gets as: {config.my_cache.get('custom_message')}")
 
 if __name__ == "__main__":
     uasyncio.run(run_main_async())

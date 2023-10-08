@@ -29,8 +29,8 @@ async def show_temp_and_update_next_buses_cache():
 async def show_humidity_and_update_line_status_cache():
     await uasyncio.gather(temp_etc_utils.show_humidity_coro(), config.my_cache.update_line_status_cache())
 
-async def show_pressure_and_update_configurable_message_cache():
-    await uasyncio.gather(temp_etc_utils.show_pressure_coro(), config.my_cache.update_configurable_message_cache())
+async def show_pressure_and_update_custom_message_cache():
+    await uasyncio.gather(temp_etc_utils.show_pressure_coro(), config.my_cache.update_custom_message_cache())
 
 async def run_attract_mode():
     # print("run_attract_mode() called")
@@ -46,7 +46,7 @@ async def run_attract_mode():
         (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
         (show_temp_and_update_next_buses_cache, None, config.CHANGE_INTERVAL),
         (show_humidity_and_update_line_status_cache, None, config.CHANGE_INTERVAL),
-        (show_pressure_and_update_configurable_message_cache, None, config.CHANGE_INTERVAL),
+        (show_pressure_and_update_custom_message_cache, None, config.CHANGE_INTERVAL),
         (temp_etc_utils.show_gas_coro, None, config.CHANGE_INTERVAL),
     ]
 
@@ -103,8 +103,8 @@ def stop_show_start_attract():
 
     # TODO: stop the show? Not needed if the show stops naturally. Only if need a command to stop the show out of sequence.
     # Add the attract tasks back to the event loop, using the vars from global scope
-    sync_ntp_task = loop.create_task(datetime_utils.sync_ntp_periodically())
-    attract_mode_task = loop.create_task(run_attract_mode())
+    sync_ntp_task = uasyncio.create_task(datetime_utils.sync_ntp_periodically())
+    attract_mode_task = uasyncio.create_task(run_attract_mode())
 
 async def listen_for_commands():
     # Uses the uasyncio.StreamReader class to read input from the standard input asynchronously without blocking.

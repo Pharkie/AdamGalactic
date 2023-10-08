@@ -75,14 +75,14 @@ async def scroll_msg(msg_text):
         p -= 1
         await uasyncio.sleep(0.03)
 
-    print("scroll_msg() complete")
+    # print("scroll_msg() complete")
 
 async def scroll_configured_message():
     # Retrieve the msg from the cache
-    msg = config.my_cache.get("configurable_message")
-    print(f"scroll_configured_message()")
+    msg = config.my_cache.get("custom_message")
+    # print(f"scroll_configured_message()")
     
-    # Get configurable message from cache, if available
+    # Get custom message from cache, if available
     try:
         # Check if msg is None (i.e. expired)
         if msg is None:
