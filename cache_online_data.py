@@ -58,7 +58,10 @@ class OnlineDataCache:
 
             # Make the API request to get the data
             try:
-                responseJSON = urequests.get(api_url, timeout=10).json()
+                response = urequests.get(api_url, timeout=10)
+                responseJSON = response.json()
+                # Essential or we get ENOMEM errors. Don't switch for one line responseJSON = urequests.get().json()
+                response.close()
             except ValueError:
                 raise Exception("invalid JSON response from API")
 

@@ -59,12 +59,11 @@ async def run_attract_mode():
 
         for i, index in enumerate(indices): # Run the tasks in the shuffled order
             task_fn, arg, timeout_secs = attract_tasks[index]
-            current_task_name = task_fn.__name__
-
+            
             # if timeout_secs is None:
-            #     print(f"Running {current_task_name} with no timeout")
+            #     print(f"Running {task_fn.__name__} with no timeout")
             # else:
-            #     print(f"Running {current_task_name} for up to {timeout_secs} seconds")
+            #     print(f"Running {task_fn.__name__} for up to {timeout_secs} seconds")
 
             try:
                 await uasyncio.wait_for(task_fn(arg) if arg is not None else task_fn(), timeout=timeout_secs)

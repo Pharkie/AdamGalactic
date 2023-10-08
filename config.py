@@ -16,7 +16,7 @@ from breakout_bme68x import BreakoutBME68X, STATUS_HEATER_STABLE, FILTER_COEFF_3
 gu = GalacticUnicorn()
 picoboard = PicoGraphics(DISPLAY)
 
-# Should rename these to e.g. PEN_BLACK, really
+# Pen colours
 PEN_BLACK = picoboard.create_pen(0, 0, 0) 
 PEN_YELLOW = picoboard.create_pen(255, 105, 0)
 PEN_GREY = picoboard.create_pen(96, 96, 96)
