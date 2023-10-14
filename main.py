@@ -16,7 +16,6 @@ import sys
 import config
 import datetime_utils
 import temp_etc_utils
-import rolling_clock_display_utils
 import panel_attract_functions
 import panel_liveshow
 import utils
@@ -36,19 +35,22 @@ async def run_attract_mode():
     
     global my_cache
 
-    # List of tasks to be run, each represented by a tuple with a function to call, an optional argument, and a timeout value.
+    # List of tasks to be run, each represented by a tuple with a function to call and a timeout value.
     # Updates different parts of the cache in the background while displaying some of the static messages.
+    # Params: (function name, timeout_secs)
     attract_tasks = [
-        (TFL.scroll_next_bus_info, None, None),
-        (TFL.scroll_piccadilly_line_status, None, None),
-        (utils.scroll_configured_message, None, None),
-        (panel_attract_functions.rolling_clock, None, config.CHANGE_INTERVAL),
-        (show_temp_and_update_next_buses_cache, None, config.CHANGE_INTERVAL),
-        (show_humidity_and_update_line_status_cache, None, config.CHANGE_INTERVAL),
-        (show_pressure_and_update_custom_message_cache, None, config.CHANGE_INTERVAL),
-        (temp_etc_utils.show_gas_coro, None, config.CHANGE_INTERVAL),
+        (TFL.scroll_next_bus_info, None),
+        (TFL.scroll_piccadilly_line_status, None),
+        (utils.scroll_configured_message, None),
+        (panel_attract_functions.rolling_clock, config.CHANGE_INTERVAL),
+        (show_temp_and_update_next_buses_cache, config.CHANGE_INTERVAL),
+        (show_humidity_and_update_line_status_cache, config.CHANGE_INTERVAL),
+        (show_pressure_and_update_custom_message_cache, config.CHANGE_INTERVAL),
+        (temp_etc_utils.show_gas_coro, config.CHANGE_INTERVAL),
     ]
 
+    # last_index to ensure that the first task of the current loop is not the same as the last task of the previous loop i.e. runs twice in a row
+    last_index = None
     while True:
         # Shuffle the indices of the tasks using the Fisher-Yates shuffle algorithm
         # implemented using urandom.getrandbits(32) to generate random numbers.
@@ -57,8 +59,14 @@ async def run_attract_mode():
             j = urandom.getrandbits(32) % (i + 1)
             indices[i], indices[j] = indices[j], indices[i]
 
+        # Check if the first item of the current loop is the same as the last item of the previous loop
+        if last_index is not None and indices[0] == last_index:
+            middle_index = len(indices) // 2
+            # Swap first task with middle task if necessary
+            indices[0], indices[middle_index] = indices[middle_index], indices[0]
+
         for i, index in enumerate(indices): # Run the tasks in the shuffled order
-            task_fn, arg, timeout_secs = attract_tasks[index]
+            task_fn, timeout_secs = attract_tasks[index]
             
             # if timeout_secs is None:
             #     print(f"Running {task_fn.__name__} with no timeout")
@@ -66,7 +74,7 @@ async def run_attract_mode():
             #     print(f"Running {task_fn.__name__} for up to {timeout_secs} seconds")
 
             try:
-                await uasyncio.wait_for(task_fn(arg) if arg is not None else task_fn(), timeout=timeout_secs)
+                await uasyncio.wait_for(task_fn() if timeout_secs is None else task_fn(), timeout=timeout_secs)
             except uasyncio.TimeoutError:
                 pass
 
@@ -75,6 +83,9 @@ async def run_attract_mode():
             config.picoboard.set_pen(config.PEN_BLACK)
             config.picoboard.clear()
             config.gu.update(config.picoboard)
+
+        # Store the last index for the next loop
+        last_index = indices[-1]
 
         # await uasyncio.sleep(5) # Debugging
 

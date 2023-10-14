@@ -9,8 +9,8 @@ License: GNU General Public License (GPL)
 """
 
 import config
-import network
-import utime
+import network # type: ignore
+import utime # type: ignore
 
 import uasyncio
 
@@ -29,10 +29,10 @@ def show_static_message(message, pen_colour, brightness=1.0):
     
     # Calculate the X position to center the text horizontally
     text_width = config.picoboard.measure_text(message, 1)
-    x_pos = (53 - text_width) // 2
+    x_pos = (config.DISPLAY_WIDTH - text_width) // 2
     
-    # Split the message into two lines if the text width is greater than 53
-    if text_width > 53:
+    # Split the message into two lines if the text width is greater than display width
+    if text_width > config.DISPLAY_WIDTH:
         # Find the index of the space closest to the center of the message
         space_index = len(message) // 2
         while message[space_index] != ' ':
@@ -44,9 +44,9 @@ def show_static_message(message, pen_colour, brightness=1.0):
         
         # Calculate the X position to center each line horizontally
         text_width1 = config.picoboard.measure_text(line1, 1)
-        x_pos1 = (53 - text_width1) // 2
+        x_pos1 = (config.DISPLAY_WIDTH - text_width1) // 2
         text_width2 = config.picoboard.measure_text(line2, 1)
-        x_pos2 = (53 - text_width2) // 2
+        x_pos2 = (config.DISPLAY_WIDTH - text_width2) // 2
         
         # Display each line of the message on a separate line
         config.picoboard.text(text=line1, x1=x_pos1, y1=-1, wordwrap=-1, scale=1)
@@ -63,9 +63,9 @@ async def scroll_msg(msg_text):
     # print(f"scroll_msg() called with msg_text: {msg_text}")
 
     length = config.picoboard.measure_text(msg_text, 1)
-    steps = length + 53 # Scroll the msg_text with a bit of padding, min 53
+    steps = length + config.DISPLAY_WIDTH # Scroll the msg_text with a bit of padding, min 53
 
-    p = 53
+    p = config.DISPLAY_WIDTH
     for _ in range(steps):
         config.picoboard.set_pen(config.PEN_BLACK)
         config.picoboard.clear()

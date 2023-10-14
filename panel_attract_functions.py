@@ -37,16 +37,16 @@ async def rolling_clock():
                 if tick_flags[j]: # Scroll that digit one row
                     # Define digit parameters as a dictionary
                     scroll_digit_params = {
-                        'reverse': 0,                  # Reverse flag (0 or 1)  # type: ignore
-                        'top_number': old_values[j],   # Top number to display  # type: ignore
-                        'bottom_number': values[j],    # Bottom number to display  # type: ignore
-                        'x_pos': config.clock_digits_x[j],                   # X position  # type: ignore
-                        'y_pos': config.clock_digit_all_y,                   # Y position  # type: ignore
-                        'loop_num': i                  # Loop number  # type: ignore
+                        'reverse': False,                       # Reverse flag (True or False)  
+                        'top_number': old_values[j],            # Top number to display  
+                        'bottom_number': values[j],             # Bottom number to display 
+                        'x_pos': config.clock_digits_x[j],      # X position 
+                        'y_pos': config.clock_digit_all_y,      # Y position 
+                        'loop_num': i                           # Loop number  
                     }
                     rolling_clock_display_utils.scroll_digit(scroll_digit_params)
                 else:
-                    rolling_clock_display_utils.show_digit(config.char_width, config.char_height, old_values[j], config.clock_digits_x[j], config.clock_digit_all_y)
+                    rolling_clock_display_utils.show_digit(old_values[j], config.clock_digits_x[j], config.clock_digit_all_y)
 
             pen_colour = config.PEN_YELLOW if values[5] % 2 == 0 else config.PEN_BLACK
             config.picoboard.set_pen(pen_colour)
