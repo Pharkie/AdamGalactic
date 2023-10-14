@@ -23,6 +23,7 @@ PEN_BLACK = picoboard.create_pen(0, 0, 0)
 PEN_YELLOW = picoboard.create_pen(255, 105, 0)
 PEN_GREY = picoboard.create_pen(96, 96, 96)
 PEN_BLUE = picoboard.create_pen(153, 255, 255)
+PEN_GREEN = picoboard.create_pen(38, 133, 40)
 
 picoboard.set_font("bitmap6")
 

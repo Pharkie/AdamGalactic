@@ -8,7 +8,7 @@ License: GNU General Public License (GPL)
 """
 
 import uasyncio
-import utime
+import utime # type: ignore
 import config
 import datetime_utils
 import rolling_clock_display_utils

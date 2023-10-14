@@ -9,7 +9,6 @@ License: GNU General Public License (GPL)
 import config
 import utils
 import uasyncio
-from time import sleep # Just for testing
 
 def show_temp():
     # print("show_temp()")
@@ -76,15 +75,3 @@ async def show_gas_coro():
     show_gas()
 
     await uasyncio.sleep(20)
-
-if __name__ == "__main__":
-    utils.clear_picoboard()
-    show_temp()
-    sleep(2)
-    show_pressure()
-    sleep(2)
-    show_humidity()
-    sleep(2)
-    show_gas()
-    sleep(2)
-    utils.clear_picoboard()
