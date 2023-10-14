@@ -31,7 +31,7 @@ async def rollback_clock():
         # config.picoboard.text(text=date_str, x1=0, y1=config.clock_digit_all_y + config.char_height + 1, wordwrap=-1, scale=1)
 
         # Get the current time in seconds since the epoch
-        real_time = utime.localtime()
+        real_time = utime.mktime(utime.localtime())
 
         # Subtract 5 seconds from the current time
         new_time = real_time - 20
@@ -89,6 +89,7 @@ async def main():
 
 if __name__ == "__main__":
     utils.clear_picoboard()
+    datetime_utils.sync_ntp()
     uasyncio.run(main())
 
     # print(utime.localtime())

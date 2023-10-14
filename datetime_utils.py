@@ -15,7 +15,7 @@ import config
 import utils
 
 def format_date(dt):
-    """Format the date as 'DD MMM YYYY'."""
+    # Format the date as 'DD MMM YYYY'."""
     months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
     day = "{:02d}".format(dt[2])
     month = months[dt[1] - 1]
@@ -23,7 +23,7 @@ def format_date(dt):
     return f"{day} {month} {year}"
 
 def last_sunday(year, month):
-    """Calculate the date of the last Sunday of the specified month and year."""
+    # Calculate the date of the last Sunday of the specified month and year."""
     # Find the date of the last Sunday in a given month
     last_day = utime.mktime((year, month + 1, 1, 0, 0, 0, 0, 0)) - 86400  # Set to the last day of the previous month
     weekday = utime.localtime(last_day)[6]  # Get the weekday for the last day
@@ -34,7 +34,7 @@ def last_sunday(year, month):
     return int(last_day)
 
 def check_BST_active(dt):
-    """Check if the current time is within BST (British Summer Time)."""
+    # Check if the current time is within BST (British Summer Time)."""
     # Check if the given datetime is in DST (BST) considering the 1 am transition
     dst_start = last_sunday(dt[0], 3)  # Last Sunday of March
     dst_end = last_sunday(dt[0], 10)   # Last Sunday of October
@@ -49,9 +49,10 @@ def check_BST_active(dt):
     else:
         return False
     
-def get_time_values():
-    """Get the current time and split it into individual digits."""
-    current_time_tuple = utime.localtime()
+def get_time_values(current_time_tuple=None):
+    # Split a time into individual digits, defaulting to current, real time."""
+    if current_time_tuple is None:
+        current_time_tuple = utime.localtime()
 
     # If it's BST, add an hour to the current time
     if config.BST_active:
@@ -72,7 +73,7 @@ def get_time_values():
     )
 
 def sync_ntp():
-    """Turn on wifi, sync RTC to NTP, turn wifi off, return BST_active True or False."""
+    # Turn on wifi, sync RTC to NTP, turn wifi off, return BST_active True or False."""
     # print('sync_ntp() called')
       
     try:
