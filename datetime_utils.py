@@ -7,11 +7,10 @@ Description: Utils that operate on datetime
 GitHub Repository: https://github.com/Pharkie/AdamGalactic/
 License: GNU General Public License (GPL)
 """
-import utime
-import network
-import ntptime
+import utime # type: ignore
+import ntptime # type: ignore
 import uasyncio
-import urandom
+import urandom  # type: ignore
 import config
 import utils
 
@@ -52,7 +51,7 @@ def check_BST_active(dt):
     
 def get_time_values():
     """Get the current time and split it into individual digits."""
-    current_time_tuple = utime.localtime()  # As set by NTP call, if Wifi is available
+    current_time_tuple = utime.localtime()
 
     # If it's BST, add an hour to the current time
     if config.BST_active:
