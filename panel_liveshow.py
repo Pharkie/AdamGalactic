@@ -13,77 +13,66 @@ import config
 import utils
 import datetime_utils
 import panel_attract_functions
-import rolling_clock_display_utils
 
-async def rollback_clock():
+async def advance_clock_slowly():
     # print("rolling_clock() called")
     old_values = datetime_utils.get_time_values()
-        
+
+    real_time = utime.mktime(utime.localtime())
+
     for i in range(5):
-        start_time = utime.ticks_ms()
-
-        # Get today's date and display it underneath the time
-        # current_date = utime.localtime()
-        # date_str = datetime_utils.format_date(current_date)
-        # Set the date text color
-        # pen_colour_date = config.PEN_GREY
-        # config.picoboard.set_pen(pen_colour_date)
-        # config.picoboard.text(text=date_str, x1=0, y1=config.clock_digit_all_y + config.char_height + 1, wordwrap=-1, scale=1)
-
-        # Get the current time in seconds since the epoch
-        real_time = utime.mktime(utime.localtime())
-
-        # Subtract 5 seconds from the current time
-        new_time = real_time - 20
-
-        # Convert the new time to a local time tuple
-        fake_time = utime.localtime(new_time)
+        # Artificially alter the current time as a tuple
+        fake_time = utime.localtime(real_time + i)
         values = list(datetime_utils.get_time_values(fake_time))
 
-        tick_flags = [values[i] != old_values[i] for i in range(6)]
+        delayed_delay = 0.05 + (0.35 * (i / 5) ** 2)
 
-        for i in range(6):
-            for j in range(6):
-                if tick_flags[j]: # Scroll that digit one row
-                    # Define digit parameters as a dictionary
-                    scroll_digit_params = {
-                        'reverse': False,                       # Reverse flag (True or False)  
-                        'top_number': old_values[j],            # Top number to display  
-                        'bottom_number': values[j],             # Bottom number to display 
-                        'x_pos': config.clock_digits_x[j],      # X position 
-                        'y_pos': config.clock_digit_all_y,      # Y position 
-                        'loop_num': i                           # Loop number  
-                    }
-                    rolling_clock_display_utils.scroll_digit(scroll_digit_params)
-                else:
-                    rolling_clock_display_utils.show_digit(old_values[j], config.clock_digits_x[j], config.clock_digit_all_y)
+        panel_attract_functions.update_clock_display(values, old_values, delay=delayed_delay)
 
-            pen_colour = config.PEN_YELLOW if values[5] % 2 == 0 else config.PEN_BLACK
-            config.picoboard.set_pen(pen_colour)
-            config.picoboard.text(text = ":", x1 = config.base_x + (2 * config.char_width), y1 = config.clock_digit_all_y, wordwrap = -1, scale = 1)
-            config.picoboard.text(text = ":", x1 = config.base_x + (4 * config.char_width) + 3, y1 = config.clock_digit_all_y, wordwrap = -1, scale = 1)
+        sleep_duration = (1 + (0.8 * (i / 5) ** 2) + (0.4 * (i / 5)))
 
-            config.gu.update(config.picoboard)
-            utime.sleep(0.05)
+        await uasyncio.sleep(sleep_duration)
 
-        end_time = utime.ticks_ms()
-        cycle_duration = utime.ticks_diff(end_time, start_time)
-        sleep_duration = 1000 - cycle_duration
+        old_values = values.copy()
 
-        if sleep_duration > 0:
-            await uasyncio.sleep_ms(sleep_duration)
+async def rollback_clock_to_madness():
+    # print("rolling_clock() called")
+    old_values = utime.localtime(utime.mktime(utime.localtime()) + 4)
+
+    start_time = utime.mktime(utime.localtime())
+
+    for i in range(500):
+        # Artificially alter the current time as a tuple
+        fake_time = utime.localtime(start_time - i)
+        values = list(datetime_utils.get_time_values(fake_time))
+
+        if i <= 5:
+            reduced_delay = 0.4 * (1 - (i / 100) ** 4)
+        else:
+            reduced_delay = 0.005
+
+        panel_attract_functions.update_clock_display(values, old_values, delay=reduced_delay)
+
+        if i <= 5:
+            sleep_duration = 0.05 + (2.95 * (1 - (i / 5) ** 4))
+        else:
+            sleep_duration = 0.03
+
+        await uasyncio.sleep(sleep_duration)
 
         old_values = values.copy()
 
 async def main():
-    await utils.scroll_msg("Showtime")
+    # await utils.scroll_msg("Showtime")
 
     try:
         await uasyncio.wait_for(panel_attract_functions.rolling_clock(), timeout=4)
     except uasyncio.TimeoutError:
         print("Timed out rollback_clock() and ended")
 
-    uasyncio.run(rollback_clock())
+    utils.clear_picoboard()
+    uasyncio.run(advance_clock_slowly())
+    uasyncio.run(rollback_clock_to_madness())
 
     utils.clear_picoboard()
 
