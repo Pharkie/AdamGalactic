@@ -41,11 +41,12 @@ def update_clock_display(new_values, old_values, delay = 0.05, reverse = False):
 
         utime.sleep(delay)
 
-async def rolling_clock():
+async def rolling_clock(for_seconds=None):
     # print("rolling_clock() called")
     old_values = datetime_utils.get_time_values()
+    counter = 0
         
-    while True:
+    while for_seconds is None or counter < for_seconds:
         start_time = utime.ticks_ms()
 
         # Get today's date and display it underneath the time
@@ -56,9 +57,9 @@ async def rolling_clock():
         config.picoboard.set_pen(pen_colour_date)
         config.picoboard.text(text=date_str, x1=0, y1=config.clock_digit_all_y + config.char_height + 1, wordwrap=-1, scale=1)
 
-        values = list(datetime_utils.get_time_values())
+        new_values = list(datetime_utils.get_time_values())
 
-        update_clock_display(values, old_values, delay = 0.05, reverse=False)
+        update_clock_display(new_values, old_values, delay = 0.05, reverse=False)
 
         end_time = utime.ticks_ms()
         cycle_duration = utime.ticks_diff(end_time, start_time)
@@ -67,5 +68,7 @@ async def rolling_clock():
         if sleep_duration > 0:
             await uasyncio.sleep_ms(sleep_duration)
 
-        old_values = values.copy()
+        old_values = new_values.copy()
+        counter += 1
 
+    return new_values

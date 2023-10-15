@@ -8,6 +8,10 @@
 import jarray # for java array # type: ignore
 import jmri # for sensors, turnouts, etc # type: ignore
 
+# Configure train
+GREEN_LOCO_ID = 9744
+LONG_ADDRESS = True
+
 RUN_FOR = 5 * 1000 # seconds
 WAIT_FOR = 1 * 1000 # seconds
 SPEED_SETTING = 0.7
@@ -19,7 +23,7 @@ class Test(jmri.jmrit.automat.AbstractAutomaton):
         self.locoAddress = locoAddress
 
         # get loco address. For long address change "False" to "True"
-        self.throttle = self.getThrottle(self.locoAddress, False)
+        self.throttle = self.getThrottle(self.locoAddress, LONG_ADDRESS)
 
         return
 
@@ -67,4 +71,4 @@ class Test(jmri.jmrit.automat.AbstractAutomaton):
 # end of class definition
 
 # start one of these up
-Test(3).start()
+Test(GREEN_LOCO_ID).start()

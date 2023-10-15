@@ -6,4 +6,5 @@ import datetime_utils
 if __name__ == "__main__":
     utils.clear_picoboard()
     datetime_utils.sync_ntp()
+    # uasyncio.run(panel_attract_functions.rolling_clock(3))
     uasyncio.run(panel_attract_functions.rolling_clock())
