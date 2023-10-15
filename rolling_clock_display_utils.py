@@ -24,8 +24,8 @@ def scroll_digit(params):
 
     # Unpack params dictionary
     reverse = params['reverse']
-    top_number = params['top_number']
-    bottom_number = params['bottom_number']
+    old_number = params['old_number']
+    new_number = params['new_number']
     x_pos = params['x_pos']
     y_pos = params['y_pos']
     loop_num = params['loop_num']
@@ -48,8 +48,8 @@ def scroll_digit(params):
         bottom_number_y = y_pos + config.char_height - (loop_num + 1)
         # print(f"reverse False. Loop: {loop_num}, top_number_y {top_number_y}, bottom_number_y {bottom_number_y}")
 
-        config.picoboard.text(text=str(top_number), x1=x_pos, y1=top_number_y, wordwrap=False, scale=1)
-        config.picoboard.text(text=str(bottom_number), x1=x_pos, y1=bottom_number_y, wordwrap=False, scale=1)
+        config.picoboard.text(text=str(old_number), x1=x_pos, y1=top_number_y, wordwrap=False, scale=1)
+        config.picoboard.text(text=str(new_number), x1=x_pos, y1=bottom_number_y, wordwrap=False, scale=1)
     else:
         config.picoboard.set_pen(config.PEN_YELLOW)
 
@@ -60,7 +60,7 @@ def scroll_digit(params):
 
         # print(f"reverse True. Loop: {loop_num}, top_number_y {top_number_y}, bottom_number_y {bottom_number_y}")
 
-        config.picoboard.text(text=str(top_number), x1=x_pos, y1=top_number_y, wordwrap=False, scale=1)
-        config.picoboard.text(text=str(bottom_number), x1=x_pos, y1=bottom_number_y, wordwrap=False, scale=1)
+        config.picoboard.text(text=str(new_number), x1=x_pos, y1=top_number_y, wordwrap=False, scale=1)
+        config.picoboard.text(text=str(old_number), x1=x_pos, y1=bottom_number_y, wordwrap=False, scale=1)
 
     config.picoboard.remove_clip()

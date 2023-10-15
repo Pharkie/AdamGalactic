@@ -13,13 +13,14 @@ async def rollback_clock_test():
     for i in range(5):
         # Artificially alter the current time as a tuple
         fake_time = utime.localtime(real_time - i)
-        values = list(datetime_utils.get_time_values(fake_time))
+        # print(f"fake_time: {real_time - i}; real_time: {real_time}")
+        new_values = list(datetime_utils.get_time_values(fake_time))
+        # print(f"values: {new_values} old_values: {old_values}")
+        panel_attract_functions.update_clock_display(new_values, old_values, delay=0.05, reverse=True)
 
-        panel_attract_functions.update_clock_display(values, old_values, delay=1, reverse=True)
+        await uasyncio.sleep(0.7)
 
-        await uasyncio.sleep(1)
-
-        old_values = values.copy()
+        old_values = new_values.copy()
 
 if __name__ == "__main__":
     utils.clear_picoboard()

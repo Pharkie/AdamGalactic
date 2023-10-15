@@ -13,8 +13,8 @@ import config
 import datetime_utils
 import rolling_clock_display_utils
 
-def update_clock_display(values, old_values, delay = 0.05, reverse = False):
-    tick_flags = [values[i] != old_values[i] for i in range(6)]
+def update_clock_display(new_values, old_values, delay = 0.05, reverse = False):
+    tick_flags = [new_values[i] != old_values[i] for i in range(6)]
 
     for i in range(6):
         for j in range(6):
@@ -22,8 +22,8 @@ def update_clock_display(values, old_values, delay = 0.05, reverse = False):
                 # Define digit parameters as a dictionary
                 scroll_digit_params = {
                     'reverse': reverse,                     # Reverse flag (True or False)  
-                    'top_number': old_values[j],            # Top number to display  
-                    'bottom_number': values[j],             # Bottom number to display 
+                    'old_number': old_values[j],            # Top number to display  
+                    'new_number': new_values[j],             # Bottom number to display 
                     'x_pos': config.clock_digits_x[j],      # X position 
                     'y_pos': config.clock_digit_all_y,      # Y position 
                     'loop_num': i                           # Loop number  
@@ -32,7 +32,7 @@ def update_clock_display(values, old_values, delay = 0.05, reverse = False):
             else:
                 rolling_clock_display_utils.show_digit(old_values[j], config.clock_digits_x[j], config.clock_digit_all_y)
 
-        pen_colour = config.PEN_YELLOW if values[5] % 2 == 0 else config.PEN_BLACK
+        pen_colour = config.PEN_YELLOW if new_values[5] % 2 == 0 else config.PEN_BLACK
         config.picoboard.set_pen(pen_colour)
         config.picoboard.text(text = ":", x1 = config.base_x + (2 * config.char_width), y1 = config.clock_digit_all_y, wordwrap = -1, scale = 1)
         config.picoboard.text(text = ":", x1 = config.base_x + (4 * config.char_width) + 3, y1 = config.clock_digit_all_y, wordwrap = -1, scale = 1)

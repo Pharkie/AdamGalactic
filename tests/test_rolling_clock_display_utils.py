@@ -3,14 +3,11 @@ import config
 from time import sleep
 import utils
 
-def test_digit_roll(reverse_flag, topnum, btmnum):
+def test_digit_roll(reverse_flag, oldnum, newnum):
     MY_X = 24
     MY_Y = 2
 
-    if reverse_flag:
-        rolling_clock_display_utils.show_digit(btmnum, MY_X, MY_Y)
-    else:
-        rolling_clock_display_utils.show_digit(topnum, MY_X, MY_Y)
+    rolling_clock_display_utils.show_digit(oldnum, MY_X, MY_Y)
 
     config.gu.update(config.picoboard)
     sleep(1)
@@ -25,8 +22,8 @@ def test_digit_roll(reverse_flag, topnum, btmnum):
         # loop_num: Loop number
         scroll_digit_params = {
             'reverse': reverse_flag,
-            'top_number': topnum,
-            'bottom_number': btmnum,
+            'old_number': oldnum,
+            'new_number': newnum,
             'x_pos': MY_X,
             'y_pos': MY_Y,
             'loop_num': i
@@ -37,10 +34,7 @@ def test_digit_roll(reverse_flag, topnum, btmnum):
         config.gu.update(config.picoboard)
         sleep(0.2)
 
-    if reverse_flag:
-        rolling_clock_display_utils.show_digit(topnum, MY_X, MY_Y)
-    else:
-        rolling_clock_display_utils.show_digit(btmnum, MY_X, MY_Y)
+    rolling_clock_display_utils.show_digit(newnum, MY_X, MY_Y)
 
     sleep(1)
 
@@ -48,4 +42,4 @@ if __name__ == "__main__":
     utils.clear_picoboard()
     test_digit_roll(False, 4, 5)
     sleep(1)
-    test_digit_roll(True, 4, 5)
+    test_digit_roll(True, 5, 4)
