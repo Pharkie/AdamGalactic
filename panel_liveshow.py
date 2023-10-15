@@ -13,6 +13,7 @@ import config
 import utils
 import datetime_utils
 import panel_attract_functions
+import urandom  # type: ignore
 
 async def advance_clock_slowly(old_values):
     # print("rolling_clock() called")
@@ -21,7 +22,7 @@ async def advance_clock_slowly(old_values):
     real_time = utime.mktime(utime.localtime())
     sleep_duration = 0
 
-    for i in range(3):
+    for i in range(4):
         # Artificially alter the current time as a tuple
         fake_time_tuple = utime.localtime(real_time + i)
         new_values = list(datetime_utils.get_time_values(fake_time_tuple))
@@ -45,13 +46,12 @@ async def rollback_clock_to_madness(fake_start_time_tuple):
 
     start_time = utime.mktime(fake_start_time_tuple)
 
-    duration = 10
     subtract_secs = 0
-    counter = 0
-
-    while utime.time() - start_time < duration:
-        delay = 0.2 * pow(0.6, counter)
-        sleep_duration = 1 * pow(0.6, counter)
+    
+    for counter in range(70):
+        # Max sets a reasonable minimum value for the delay and sleep_duration
+        delay = max(0.001, 0.2 * pow(0.6, counter))
+        sleep_duration = max(0.001, 1 * pow(0.6, counter))
 
         # Artificially alter the current time as a tuple
         fake_time_tuple = utime.localtime(start_time - subtract_secs)
@@ -63,7 +63,7 @@ async def rollback_clock_to_madness(fake_start_time_tuple):
             delay = 0
             sleep_duration = 0
 
-        # print(f"counter {counter} delay {delay} sleep_duration = {sleep_duration} subtract_secs {subtract_secs}")
+        print(f"counter {counter} delay {delay} sleep_duration = {sleep_duration} subtract_secs {subtract_secs}")
 
         panel_attract_functions.update_clock_display(new_values, old_values, delay=delay, reverse=True)
 
@@ -72,8 +72,10 @@ async def rollback_clock_to_madness(fake_start_time_tuple):
         old_values = new_values.copy()
 
         # Exponential acceleration
-        subtract_secs += int(1 * pow(1.25, counter))
-        counter += 1
+        subtract_secs += int( 1 * pow(1.25, counter))
+        # Min sets a reasonable ceiling value of seconds to subtract
+        if subtract_secs > 43000:
+            subtract_secs = urandom.randint(100, 50000)
 
 async def main():
     # await utils.scroll_msg("Showtime")
