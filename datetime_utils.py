@@ -81,7 +81,7 @@ def sync_ntp():
                     raise Exception("Wi-Fi is not connected")
         
         ntptime.settime() # No parameters available for DST offset
-        # print("Time set from NTP")
+        print("Time set from NTP")
 
         # Update the global BST status
         current_time_tuple = utime.localtime()

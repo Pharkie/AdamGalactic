@@ -13,7 +13,7 @@ import config
 import datetime_utils
 import rolling_clock_display_utils
 
-def update_clock_display(values, old_values, delay = 0.05):
+def update_clock_display(values, old_values, delay = 0.05, reverse = False):
     tick_flags = [values[i] != old_values[i] for i in range(6)]
 
     for i in range(6):
@@ -21,11 +21,11 @@ def update_clock_display(values, old_values, delay = 0.05):
             if tick_flags[j]: # Scroll that digit one row
                 # Define digit parameters as a dictionary
                 scroll_digit_params = {
-                    'reverse': False,                       # Reverse flag (True or False)  
+                    'reverse': reverse,                     # Reverse flag (True or False)  
                     'top_number': old_values[j],            # Top number to display  
                     'bottom_number': values[j],             # Bottom number to display 
-                    'x_pos': config.clock_digits_x[j],             # X position 
-                    'y_pos': config.clock_digit_all_y,             # Y position 
+                    'x_pos': config.clock_digits_x[j],      # X position 
+                    'y_pos': config.clock_digit_all_y,      # Y position 
                     'loop_num': i                           # Loop number  
                 }
                 rolling_clock_display_utils.scroll_digit(scroll_digit_params)
@@ -58,7 +58,7 @@ async def rolling_clock():
 
         values = list(datetime_utils.get_time_values())
 
-        update_clock_display(values, old_values, delay = 0.05)
+        update_clock_display(values, old_values, delay = 0.05, reverse=False)
 
         end_time = utime.ticks_ms()
         cycle_duration = utime.ticks_diff(end_time, start_time)
