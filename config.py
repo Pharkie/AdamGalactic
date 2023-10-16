@@ -40,8 +40,6 @@ from wifi_creds import WIFI_SSID, WIFI_PASSWORD
 
 CHANGE_INTERVAL = 6 # seconds
 
-BST_active = False
-
 base_x = 9
 char_width = 5
 char_height = 5

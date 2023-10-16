@@ -12,7 +12,7 @@ import utils
 
 def show_digit(number_to_show, x_pos, y_pos):
     """Display a single digit at the specified position."""
-    config.picoboard.set_pen(config.picoboard.create_pen(0, 0, 0)) # Can't use COLOUR_BLACK, risks a dependency loop between this and main.py
+    config.picoboard.set_pen(config.PEN_BLACK)
     config.picoboard.rectangle(x_pos, y_pos, config.char_width, config.char_height)
     
     config.picoboard.set_pen(config.PEN_YELLOW)
@@ -40,10 +40,9 @@ def scroll_digit(params):
     config.picoboard.rectangle(x_pos, y_pos, config.char_width, config.char_height)
 
     config.picoboard.set_clip(x_pos, y_pos, config.char_width, config.char_height)
+    config.picoboard.set_pen(config.PEN_YELLOW)
 
     if not reverse:
-        config.picoboard.set_pen(config.PEN_YELLOW)
-
         top_number_y = y_pos - (loop_num + 1)
         bottom_number_y = y_pos + config.char_height - (loop_num + 1)
         # print(f"reverse False. Loop: {loop_num}, top_number_y {top_number_y}, bottom_number_y {bottom_number_y}")
@@ -51,8 +50,6 @@ def scroll_digit(params):
         config.picoboard.text(text=str(old_number), x1=x_pos, y1=top_number_y, wordwrap=False, scale=1)
         config.picoboard.text(text=str(new_number), x1=x_pos, y1=bottom_number_y, wordwrap=False, scale=1)
     else:
-        config.picoboard.set_pen(config.PEN_YELLOW)
-
         loop_num = config.char_height - loop_num - 1
 
         top_number_y = y_pos - config.char_height + loop_num

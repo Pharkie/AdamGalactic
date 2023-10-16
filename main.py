@@ -112,7 +112,7 @@ def stop_show_start_attract():
 
     # TODO: stop the show? Not needed if the show stops naturally. Only if need a command to stop the show out of sequence.
     # Add the attract tasks back to the event loop, using the vars from global scope
-    sync_ntp_task = uasyncio.create_task(datetime_utils.sync_ntp_periodically())
+    sync_ntp_task = uasyncio.create_task(datetime_utils.sync_rtc_periodically())
     attract_mode_task = uasyncio.create_task(run_attract_mode())
 
 async def listen_for_commands():
@@ -151,7 +151,7 @@ if __name__ == "__main__":
     uasyncio.run(cache_online_data.main())
 
     # Add the attract tasks to the event loop. Creates vars that can be accessed in functions to cancel or restart.
-    sync_ntp_task = uasyncio.create_task(datetime_utils.sync_ntp_periodically())
+    sync_ntp_task = uasyncio.create_task(datetime_utils.sync_rtc_periodically())
     command_task = uasyncio.create_task(listen_for_commands())
     attract_mode_task = uasyncio.create_task(run_attract_mode())
 

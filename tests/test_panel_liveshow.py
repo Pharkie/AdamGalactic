@@ -24,5 +24,5 @@ async def rollback_clock_test():
 
 if __name__ == "__main__":
     utils.clear_picoboard()
-    datetime_utils.sync_ntp()
+    datetime_utils.sync_rtc()
     uasyncio.run(rollback_clock_test())
