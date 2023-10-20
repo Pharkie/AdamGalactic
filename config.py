@@ -2,7 +2,7 @@
 Author: Adam Knowles
 Version: 0.1
 Name: config.py
-Description: Set up global variables and objects
+Description: Set up global config, variables and objects
 
 GitHub Repository: https://github.com/Pharkie/AdamGalactic/
 License: GNU General Public License (GPL)

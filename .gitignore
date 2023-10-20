@@ -163,3 +163,4 @@ wifi_creds.py
 /*.code-workspace
 .jython_cache
 /examples
+.DS_Store
