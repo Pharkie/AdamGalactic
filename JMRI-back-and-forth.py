@@ -38,6 +38,8 @@ class Test(jmri.jmrit.automat.AbstractAutomaton):
         # wait for layout to catch up
         print("Wait for {} seconds".format(WAIT_FOR / 1000))
         self.waitMsec(WAIT_FOR)
+
+        # set speed
         print("Set speed to {}".format(SPEED_SETTING))
         self.throttle.setSpeedSetting(SPEED_SETTING)
 
@@ -52,7 +54,9 @@ class Test(jmri.jmrit.automat.AbstractAutomaton):
         self.throttle.setIsForward(False)
         # wait for layout to catch up
         print("Wait for {} seconds".format(WAIT_FOR / 1000))
-        self.waitMsec(WAIT_FOR)           
+        self.waitMsec(WAIT_FOR)
+
+        # set speed         
         print("Set speed to {}".format(SPEED_SETTING))
         self.throttle.setSpeedSetting(SPEED_SETTING)
 
