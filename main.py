@@ -7,11 +7,13 @@ via NTP if Wifi is available, taking account of British Summer Time (BST)
 GitHub Repository: https://github.com/Pharkie/AdamGalactic/ClockRolling.py
 License: GNU General Public License (GPL)
 """
+
 # Micropython libs
-import urandom # type: ignore
+import urandom  # type: ignore
 import TFL
 import uasyncio
 import sys
+
 # My project
 import config
 import datetime_utils
@@ -21,18 +23,40 @@ import panel_liveshow
 import utils
 import cache_online_data
 
+
 async def show_temp_and_update_next_buses_cache():
-    await uasyncio.gather(temp_etc_utils.show_temp_coro(), config.my_cache.update_next_buses_cache())
+    if config.BME_ENABLED:
+        await uasyncio.gather(
+            temp_etc_utils.show_temp_coro(),
+            config.my_cache.update_next_buses_cache(),
+        )
+    else:
+        await config.my_cache.update_next_buses_cache()
+
 
 async def show_humidity_and_update_line_status_cache():
-    await uasyncio.gather(temp_etc_utils.show_humidity_coro(), config.my_cache.update_line_status_cache())
+    if config.BME_ENABLED:
+        await uasyncio.gather(
+            temp_etc_utils.show_humidity_coro(),
+            config.my_cache.update_line_status_cache(),
+        )
+    else:
+        await config.my_cache.update_line_status_cache()
+
 
 async def show_pressure_and_update_custom_message_cache():
-    await uasyncio.gather(temp_etc_utils.show_pressure_coro(), config.my_cache.update_custom_message_cache())
+    if config.BME_ENABLED:
+        await uasyncio.gather(
+            temp_etc_utils.show_pressure_coro(),
+            config.my_cache.update_custom_message_cache(),
+        )
+    else:
+        await config.my_cache.update_custom_message_cache()
+
 
 async def run_attract_mode():
     # print("run_attract_mode() called")
-    
+
     global my_cache
 
     # List of tasks to be run, each represented by a tuple with a function to call and a timeout value.
@@ -63,18 +87,26 @@ async def run_attract_mode():
         if last_index is not None and indices[0] == last_index:
             middle_index = len(indices) // 2
             # Swap first task with middle task if necessary
-            indices[0], indices[middle_index] = indices[middle_index], indices[0]
+            indices[0], indices[middle_index] = (
+                indices[middle_index],
+                indices[0],
+            )
 
-        for i, index in enumerate(indices): # Run the tasks in the shuffled order
+        for i, index in enumerate(
+            indices
+        ):  # Run the tasks in the shuffled order
             task_fn, timeout_secs = attract_tasks[index]
-            
+
             # if timeout_secs is None:
             #     print(f"Running {task_fn.__name__} with no timeout")
             # else:
             #     print(f"Running {task_fn.__name__} for up to {timeout_secs} seconds")
 
             try:
-                await uasyncio.wait_for(task_fn() if timeout_secs is None else task_fn(), timeout=timeout_secs)
+                await uasyncio.wait_for(
+                    task_fn() if timeout_secs is None else task_fn(),
+                    timeout=timeout_secs,
+                )
             except uasyncio.TimeoutError:
                 pass
 
@@ -89,10 +121,11 @@ async def run_attract_mode():
 
         # await uasyncio.sleep(5) # Debugging
 
+
 # Stop attract mode. Start the show
 async def stop_attract_start_show():
     print("stop_attract_start_show()")
-    
+
     # Cancel attract tasks from global scope (we don't need "global" because we don't writing to them)
     # (Seems no need to cancel the attract tasks because they are cancelled when the main_task is cancelled)
     global attract_mode_task, sync_ntp_task
@@ -101,19 +134,21 @@ async def stop_attract_start_show():
 
     # Start the show and wait for it to complete
     await panel_liveshow.main()
-    
+
     # Start the attract mode again
     stop_show_start_attract()
+
 
 # Stop the show. Start attract mode.
 def stop_show_start_attract():
     # print("stop_show_start_attract()") # Also starts when the show stops naturally i.e. not via a received command
-    global attract_mode_task, sync_ntp_task # Let's not create new vars in this scope
+    global attract_mode_task, sync_ntp_task  # Let's not create new vars in this scope
 
     # TODO: stop the show? Not needed if the show stops naturally. Only if need a command to stop the show out of sequence.
     # Add the attract tasks back to the event loop, using the vars from global scope
     sync_ntp_task = uasyncio.create_task(datetime_utils.sync_rtc_periodically())
     attract_mode_task = uasyncio.create_task(run_attract_mode())
+
 
 async def listen_for_commands():
     # Uses the uasyncio.StreamReader class to read input from the standard input asynchronously without blocking.
@@ -132,15 +167,16 @@ async def listen_for_commands():
             await uasyncio.sleep(0.01)
 
         # Waits for a command and blocks the rest of this function, so need for sleep in this loop
-        command = await reader.readline() 
+        command = await reader.readline()
 
-        print(f"Command received: {command.decode().strip()}") 
+        print(f"Command received: {command.decode().strip()}")
         if command == b"show-start\n":
             await stop_attract_start_show()
         elif command == b"show-stop\n":
             stop_show_start_attract()
         else:
             print("Unknown command:", command.decode().strip())
+
 
 if __name__ == "__main__":
     print("Start program")
